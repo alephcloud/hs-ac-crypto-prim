@@ -38,12 +38,18 @@ Library
   exposed-modules:
       TWC.Crypto.Bn
       TWC.Crypto.Aes
+      TWC.Crypto.Ecc
+      TWC.Crypto.Ecdsa
       TWC.Crypto.Sha
       TWC.Crypto.Hmac
       TWC.Crypto.Pbkdf2
       TWC.Crypto.ByteArray
       TWC.Crypto.ByteArrayL
       TWC.Crypto.Codec
+      TWC.Crypto.Utils
+  other-modules:
+      TWC.Crypto.Ecc.Key
+      TWC.Crypto.Ecc.Ops
 
   build-depends:
       base,
@@ -70,6 +76,7 @@ Library
       other-modules: TWC.Crypto.Native
                    , TWC.Crypto.Bn.Native
                    , TWC.Crypto.Aes.Native
+                   , TWC.Crypto.Ecc.Native
                    , TWC.Crypto.Sha.Native
                    , TWC.Crypto.Hmac.Native
                    , TWC.Crypto.Pbkdf2.Native
