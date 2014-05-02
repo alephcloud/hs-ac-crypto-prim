@@ -76,14 +76,24 @@ Library
       other-modules: TWC.Crypto.Native
                    , TWC.Crypto.Bn.Native
                    , TWC.Crypto.Aes.Native
-                   , TWC.Crypto.Ecc.Native
                    , TWC.Crypto.Sha.Native
                    , TWC.Crypto.Hmac.Native
                    , TWC.Crypto.Pbkdf2.Native
---   if flag(openssl)
---     if flag(ecc_openssl)
---         cpp-options: -DECC_OPENSSL
---         other-modules: TWC.Crypto.Ecc.Openssl
---     else
---         cpp-options: -DECC_NATIVE
---         other-modules: TWC.Crypto.Ecc.Native
+   if flag(openssl)
+     -- link with the C library if openssl is enabled
+     if os(mingw32)
+       extra-libraries: eay32, ssl32, wsock32
+       CC-Options:      -D MINGW32
+     else
+       extra-libraries: crypto, ssl
+
+     if flag(ecc_openssl)
+         cpp-options: -DECC_OPENSSL
+         other-modules: TWC.Crypto.Ecc.OpenSSL
+                      , TWC.Crypto.Ecc.OpenSSLBind
+     else
+         cpp-options: -DECC_NATIVE
+         other-modules: TWC.Crypto.Ecc.Native
+   else
+       cpp-options: -DECC_NATIVE
+       other-modules: TWC.Crypto.Ecc.Native
