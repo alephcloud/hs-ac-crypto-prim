@@ -20,15 +20,17 @@ module TWC.Crypto.Aes.Native
 , generateAesIV
 , aes256CbcEncrypt
 , aes256CbcDecrypt
+, aes256CbcDecryptNoPad
 , AesSize
 ) where
 
 import Control.Applicative
 
-import "cipher-aes" Crypto.Cipher.AES
-import Crypto.Padding
+import Crypto.Cipher.AES
 
 import Data.ByteString (ByteString)
+import qualified Data.ByteString as B
+import Data.Monoid.Unicode
 
 import Prelude.Unicode
 
@@ -37,6 +39,14 @@ import TWC.Crypto.ByteArray
 import TWC.Crypto.ByteArrayL
 
 import TypeLevel.Number.Classes
+
+padPKCS7 ∷ Int → ByteString → ByteString
+padPKCS7 blockLength a = case blockLength - (B.length a `rem` blockLength) of
+    0 → a ⊕ B.replicate blockLength (fromIntegral blockLength)
+    i → a ⊕ B.replicate i (fromIntegral i)
+
+unpadPKCS7 ∷ ByteString → ByteString
+unpadPKCS7 a = B.take (B.length a - fromIntegral (B.last a)) a
 
 -- | AES keys have a particular length. Right now we
 -- don't enforce this on the type level, still we use
@@ -97,13 +107,19 @@ aesBlockLength = toInt (undefined ∷ AesBlockLength)
 --
 aes256CbcEncrypt ∷ AesKey256 → AesIV → ByteString → ByteString
 aes256CbcEncrypt k iv d =
-    encryptCBC (initAES (toBytes k ∷ ByteString)) (toBytes iv ∷ ByteString) $ padPKCS5 aesBlockLength d
+    encryptCBC (initAES (toBytes k ∷ ByteString)) (toBytes iv ∷ ByteString) $ padPKCS7 aesBlockLength d
 
 -- | AES-256 decryption with CBC mode and PKCS#5 padding
 --
 aes256CbcDecrypt ∷ AesKey256 → AesIV → ByteString → ByteString
 aes256CbcDecrypt k iv d =
-    unpadPKCS5 $ decryptCBC (initAES (toBytes k ∷ ByteString)) (toBytes iv ∷ ByteString) d
+    unpadPKCS7 $ decryptCBC (initAES (toBytes k ∷ ByteString)) (toBytes iv ∷ ByteString) d
+
+-- | AES-256 decryption with CBC mode without padding
+--
+aes256CbcDecryptNoPad ∷ AesKey256 → AesIV → ByteString → ByteString
+aes256CbcDecryptNoPad k iv d =
+    decryptCBC (initAES (toBytes k ∷ ByteString)) (toBytes iv ∷ ByteString) d
 
 type family AesSize n
 type instance AesSize n = AesSize' n AesBlockLength (Compare n AesBlockLength)

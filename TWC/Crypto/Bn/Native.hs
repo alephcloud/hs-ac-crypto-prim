@@ -38,7 +38,7 @@ module TWC.Crypto.Bn.Native
 import Control.Applicative
 import Control.Monad
 
-import Crypto.Random.DRBG
+import Crypto.Random
 
 import qualified Data.ByteString as B
 import Data.Word
@@ -108,8 +108,8 @@ bnLength i = floor (logBase (256 ∷ Double) (fromInteger i)) + 1
 bnRandom ∷ Integer → IO Bn
 bnRandom i = do
     let l = bnLength i
-    Right (r, _) ← genBytes l <$> (newGenIO ∷ IO HashDRBG)
-    return $ bytesToBn (B.unpack r) `mod` i
+    rng ← cprgCreate <$> createEntropyPool :: IO SystemRNG
+    return $ bytesToBn (B.unpack ∘ fst ∘ cprgGenerate l $ rng) `mod` i
 
 -- | Big endian serialization of /positive/ integers
 --

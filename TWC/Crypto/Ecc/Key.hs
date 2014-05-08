@@ -58,6 +58,7 @@ import Control.Applicative hiding (empty)
 import Data.Monoid.Unicode
 
 import Control.Monad
+import Control.Monad.Error
 import Control.Monad.IO.Class
 
 import Data.String

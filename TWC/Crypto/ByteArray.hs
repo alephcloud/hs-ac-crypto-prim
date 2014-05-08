@@ -25,7 +25,7 @@ import TWC.Crypto.Codec
 import Control.Applicative hiding (empty)
 import Control.Monad.IO.Class
 
-import Crypto.Random.DRBG
+import Crypto.Random
 
 import qualified Data.ByteString as B
 import qualified Data.ByteString.Char8 as B8
@@ -145,8 +145,9 @@ instance ByteArray B.ByteString where
     {-# INLINABLE fromList #-}
     {-# INLINABLE toList #-}
 
-    randomBytes i = liftIO $
-        fst ∘ either (error ∘ show) id ∘ genBytes i <$> (newGenIO ∷ IO HashDRBG)
+    randomBytes i = liftIO $ do
+        rng ← cprgCreate <$> createEntropyPool :: IO SystemRNG
+        return $ fst ∘ cprgGenerate i $ rng
 
 instance Bytes B.ByteString where
     type ByteArrayImpl B.ByteString = B.ByteString
@@ -176,8 +177,9 @@ instance ByteArray [Word8] where
     {-# INLINABLE fromList #-}
     {-# INLINABLE toList #-}
 
-    randomBytes i = liftIO $
-        B.unpack ∘ fst ∘ either (error ∘ show) id ∘ genBytes i <$> (newGenIO ∷ IO HashDRBG)
+    randomBytes i = liftIO $ do
+        rng ← cprgCreate <$> createEntropyPool :: IO SystemRNG
+        return $ B.unpack ∘ fst ∘ cprgGenerate i $ rng
 
 instance Bytes [Word8] where
     type ByteArrayImpl [Word8] = [Word8]
