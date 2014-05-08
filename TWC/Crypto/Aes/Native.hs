@@ -14,11 +14,13 @@ module TWC.Crypto.Aes.Native
 , AesIV
 , AesIVLength
 , aesIVLength
+, aesCBCResidual
 , aesBlockLength
 , AesBlockLength
 , generateAesKey256
 , generateAesIV
 , aes256CbcEncrypt
+, aes256CbcEncryptNoPad
 , aes256CbcDecrypt
 , aes256CbcDecryptNoPad
 , AesSize
@@ -47,6 +49,10 @@ padPKCS7 blockLength a = case blockLength - (B.length a `rem` blockLength) of
 
 unpadPKCS7 ∷ ByteString → ByteString
 unpadPKCS7 a = B.take (B.length a - fromIntegral (B.last a)) a
+
+aesCBCResidual :: ByteString -> Maybe AesIV
+aesCBCResidual b = either (const Nothing) Just $ fromBytes $ B.drop (len - aesBlockLength) b
+  where len = B.length b
 
 -- | AES keys have a particular length. Right now we
 -- don't enforce this on the type level, still we use
@@ -108,6 +114,12 @@ aesBlockLength = toInt (undefined ∷ AesBlockLength)
 aes256CbcEncrypt ∷ AesKey256 → AesIV → ByteString → ByteString
 aes256CbcEncrypt k iv d =
     encryptCBC (initAES (toBytes k ∷ ByteString)) (toBytes iv ∷ ByteString) $ padPKCS7 aesBlockLength d
+
+-- | AES-256 encryption with CBC mode and no padding
+--
+aes256CbcEncryptNoPad ∷ AesKey256 → AesIV → ByteString → ByteString
+aes256CbcEncryptNoPad k iv d =
+    encryptCBC (initAES (toBytes k ∷ ByteString)) (toBytes iv ∷ ByteString) d
 
 -- | AES-256 decryption with CBC mode and PKCS#5 padding
 --
