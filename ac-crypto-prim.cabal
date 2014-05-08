@@ -30,6 +30,14 @@ Flag haste
   description: build using haste backend. not currently supported
   default: False
 
+Flag curve25519
+  description: add support for curve 25519 DH
+  default: True
+
+Flag ed25519
+  description: add support for signature with curve25519
+  default: True
+
 Flag ecc_openssl
   description: build ECC using openssl
   default: False
@@ -97,3 +105,12 @@ Library
    else
        cpp-options: -DECC_NATIVE
        other-modules: TWC.Crypto.Ecc.Native
+
+   if flag(curve25519)
+       other-modules:      Crypto.DH.Curve25519
+       c-sources:          cbits/curve25519.c
+       include-dirs:       cbits cbits/include
+   if flag(ed25519)
+       other-modules:      Crypto.Sign.Ed25519
+       c-sources:          cbits/ed25519.c
+       include-dirs:       cbits cbits/include
