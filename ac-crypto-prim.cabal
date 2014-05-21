@@ -7,16 +7,19 @@ Version:             0.2.0
 Synopsis:            Alephcloud Crypto Library
 description:
     Twc Crypto Library
-Homepage:            https://corp.alephcloud.com/hackage/package/twc-crypto-prim-native
+Homepage:            https://github.com/alephcloud/hs-ac-crypto-prim
 License:             AllRightsReserved
 License-file:        LICENSE
 Author:              Lars Kuhtz <lars@alephcloud.com>
 Maintainer:          lars@alephcloud.com
 Copyright:           Copyright (c) 2012 AlephCloud, Inc.
-Category:            Cryptography
+Category:            Cryptography, AlephCloud
 Build-type:          Simple
-
 cabal-version: >=1.10
+
+source-repository head
+    type: git
+    location: git@github.com:alephcloud/hs-ac-crypto-prim.git
 
 Flag native
   description: build using native code (no openssl, no haste)
@@ -60,7 +63,7 @@ Library
       TWC.Crypto.Ecc.Ops
 
   build-depends:
-      base >= 4.7,
+      base >= 4.7 && < 5.0,
       base-unicode-symbols >= 0.2.2.4,
       safe >= 0.3.3,
       bytestring >= 0.10.0.2,
