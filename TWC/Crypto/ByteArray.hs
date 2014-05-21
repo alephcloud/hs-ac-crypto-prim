@@ -12,20 +12,14 @@ module TWC.Crypto.ByteArray
 , module TWC.Crypto.Codec
 ) where
 
-import Control.Monad.IO.Class
-
-import Data.Monoid
-import Data.Word
-
-import Prelude hiding (splitAt, length, take, drop)
-import Prelude.Unicode
-
-import TWC.Crypto.Codec
-
 import Control.Applicative hiding (empty)
 import Control.Monad.IO.Class
 
 import Crypto.Random
+
+import Data.ByteString (ByteString)
+import Data.Monoid
+import Data.Word
 
 import qualified Data.ByteString as B
 import qualified Data.ByteString.Char8 as B8
@@ -33,14 +27,11 @@ import qualified Data.ByteString.Base16 as B16
 import qualified Data.ByteString.Base64.URL as B64
 import Data.Monoid.Unicode
 import qualified Data.List as L
-import Data.Word
 
-import Prelude hiding (take, drop, length, splitAt)
+import Prelude hiding (splitAt, length, take, drop)
 import Prelude.Unicode
 
 import TWC.Crypto.Codec
-
-import Data.ByteString (ByteString)
 
 -- | The class of ByteArrays for usage with
 -- cryptographic ciphers.
@@ -91,34 +82,6 @@ class (ByteArray (ByteArrayImpl α)) ⇒ Bytes α where
     toBytes ∷ α → (ByteArrayImpl α)
     fromBytes ∷ (ByteArrayImpl α) → Either String α
 
-{- This won't work because the type familie instance
- - would conflict with any other instance. But
- - given that there will be only a limited number
- - of implementations it is fine to define these
- - instances explicitely.
- -
-instance (ByteArray α) ⇒ Bytes α where
-    type ByteArrayImpl α = α
-    toBytes = id
-    fromBytes = Right
-
-    {-# INLINABLE toBytes #-}
-    {-# INLINABLE fromBytes #-}
--}
-
-{-
--- -------------------------------------------------------------------------- --
--- * Serialization
-
-instance (Code64 α, Bytes α) ⇒ Code64 α where
-    to64 = to64 ∘ toBytes
-    from64 = fromBytes <=< from64
-
-instance (Code16 α, Bytes α) ⇒ Code16 α where
-    to16 = to16 ∘ toBytes
-    from16 = fromBytes <=< from16
--}
-
 #ifdef __HASTE__
 
 type BackendByteArray = SjclByteArray
@@ -146,7 +109,7 @@ instance ByteArray B.ByteString where
     {-# INLINABLE toList #-}
 
     randomBytes i = liftIO $ do
-        rng ← cprgCreate <$> createEntropyPool :: IO SystemRNG
+        rng ← cprgCreate <$> createEntropyPool ∷ IO SystemRNG
         return $ fst ∘ cprgGenerate i $ rng
 
 instance Bytes B.ByteString where
@@ -178,7 +141,7 @@ instance ByteArray [Word8] where
     {-# INLINABLE toList #-}
 
     randomBytes i = liftIO $ do
-        rng ← cprgCreate <$> createEntropyPool :: IO SystemRNG
+        rng ← cprgCreate <$> createEntropyPool ∷ IO SystemRNG
         return $ B.unpack ∘ fst ∘ cprgGenerate i $ rng
 
 instance Bytes [Word8] where
