@@ -50,7 +50,7 @@ padPKCS7 blockLength a = case blockLength - (B.length a `rem` blockLength) of
 unpadPKCS7 ∷ ByteString → ByteString
 unpadPKCS7 a = B.take (B.length a - fromIntegral (B.last a)) a
 
-aesCBCResidual :: ByteString -> Maybe AesIV
+aesCBCResidual ∷ ByteString → Maybe AesIV
 aesCBCResidual b = either (const Nothing) Just $ fromBytes $ B.drop (len - aesBlockLength) b
   where len = B.length b
 
