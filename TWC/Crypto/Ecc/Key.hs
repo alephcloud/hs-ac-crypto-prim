@@ -13,6 +13,7 @@
 {-# LANGUAGE FlexibleContexts #-}
 {-# LANGUAGE UndecidableInstances #-}
 {-# LANGUAGE GeneralizedNewtypeDeriving #-}
+{-# LANGUAGE DataKinds #-}
 
 module TWC.Crypto.Ecc.Key
 ( PublicKey(..)
@@ -63,6 +64,8 @@ import Control.Monad.IO.Class
 
 import Data.String
 import Data.Word
+
+import GHC.TypeLits
 
 import Prelude hiding (length, splitAt, take, drop)
 import Prelude.Unicode
@@ -133,7 +136,7 @@ ecScalarToBytesL = unsafeFromBytes ∘ padLeft 0 ecScalarLength ∘ toBytes ∘ 
 ecPointLength ∷ Int
 ecPointLength = curveFieldLength + 1
 
-type EcPointLength = CurveFieldLength :+: N1
+type EcPointLength = CurveFieldLength + 1
 
 instance Bytes EcPoint where
     type ByteArrayImpl EcPoint = BackendByteArray
@@ -167,14 +170,14 @@ ecFieldToBytesL = unsafeFromBytes ∘ padLeft 0 curveFieldLength ∘ toBytes
 ecPointToBinCompressedL ∷ EcPoint → BackendByteArrayL EcPointLength
 ecPointToBinCompressedL p = prefix % (ecFieldToBytesL ∘ ecX) p
     where
-    prefix ∷ BackendByteArrayL N1
+    prefix ∷ BackendByteArrayL 1
     prefix = either error id ∘ fromBytes ∘ fromList $ if (ecY p `mod` 2) ≡ 0 then [2 ∷ Word8] else [3 ∷ Word8]
 
 -- This is not a general method but works only for the moduli of curve 192 and 521
 --
 ecPointFromBinCompressedL ∷ BackendByteArrayL EcPointLength → Either String EcPoint
 ecPointFromBinCompressedL x = do
-    let (c ∷ BackendByteArrayL N1, b) = splitL x
+    let (c ∷ BackendByteArrayL 1, b) = splitL x
     xBn ← ecFieldFromBytesL b
     cBn ← fromBytes $ toBytes c
     yBn ← affineY cBn xBn

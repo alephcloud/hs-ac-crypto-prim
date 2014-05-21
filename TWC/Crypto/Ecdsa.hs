@@ -24,6 +24,10 @@ module TWC.Crypto.Ecdsa
 import Control.Applicative
 import Control.Monad.IO.Class
 
+import Data.Proxy
+
+import GHC.TypeLits
+
 import Prelude hiding (take, drop)
 import Prelude.Unicode
 
@@ -41,10 +45,10 @@ import TWC.Crypto.Ecc
 newtype EcdsaSignature = EcdsaSignature { unEcdsaSignature ∷ BackendByteArrayL EcdsaSignatureLength }
     deriving (Show, Eq, Ord, Code64, Code16)
 
-type EcdsaSignatureLength = EcScalarLength :+: EcScalarLength
+type EcdsaSignatureLength = EcScalarLength + EcScalarLength
 
 ecdsaSignatureLength ∷ Int
-ecdsaSignatureLength = toInt (undefined ∷ EcdsaSignatureLength)
+ecdsaSignatureLength = toInt (Proxy ∷ Proxy EcdsaSignatureLength)
 
 instance Bytes EcdsaSignature where
     type ByteArrayImpl EcdsaSignature = BackendByteArray
@@ -87,7 +91,7 @@ verifyLegacy
 verifyLegacy = verify' sha256Hash
 
 verify'
-    ∷ Nat ν
+    ∷ KnownNat ν
     ⇒ (BackendByteArray → BackendByteArrayL ν)
     → PublicKey
     → BackendByteArray

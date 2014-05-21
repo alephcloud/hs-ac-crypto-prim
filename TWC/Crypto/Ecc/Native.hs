@@ -10,6 +10,7 @@
 {-# LANGUAGE ScopedTypeVariables #-}
 {-# LANGUAGE RecordWildCards #-}
 {-# LANGUAGE FlexibleContexts #-}
+{-# LANGUAGE DataKinds #-}
 
 -- | An implementation of basic EC primitives for EC cryptography.
 --
@@ -61,7 +62,7 @@ module TWC.Crypto.Ecc.Native
 
 import Prelude.Unicode
 import TWC.Crypto.Bn
-import TWC.Crypto.ByteArrayL (N66)
+-- import TWC.Crypto.ByteArrayL (N66)
 
 -- -------------------------------------------------------------------------- --
 -- * Prime order elleptic curve
@@ -133,7 +134,7 @@ curveR ∷ Bn
 curveR = curveR_ curve
 
 -- FIXME
-type CurveFieldLength = N66
+type CurveFieldLength = 66
 type EcFieldLength = CurveFieldLength
 
 curveFieldLength ∷ Int

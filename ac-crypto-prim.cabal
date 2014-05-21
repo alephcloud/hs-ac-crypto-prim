@@ -60,7 +60,7 @@ Library
       TWC.Crypto.Ecc.Ops
 
   build-depends:
-      base == 4.*,
+      base >= 4.7,
       base-unicode-symbols >= 0.2.2.4,
       safe >= 0.3.3,
       bytestring >= 0.10.0.2,
@@ -70,7 +70,6 @@ Library
       cipher-aes >= 0.2.5,
       base64-bytestring >= 1.0.0.1,
       base16-bytestring >= 0.1.1.5,
-      type-level-numbers >= 0.1.1.0,
       transformers >= 0.3.0.0,
       mtl,
       crypto-random >= 0.0.7

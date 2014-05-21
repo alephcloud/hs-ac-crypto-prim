@@ -3,6 +3,9 @@
 {-# LANGUAGE FlexibleContexts #-}
 {-# LANGUAGE TypeFamilies #-}
 {-# LANGUAGE GeneralizedNewtypeDeriving #-}
+{-# LANGUAGE DataKinds #-}
+{-# LANGUAGE TypeOperators #-}
+{-# LANGUAGE ConstraintKinds #-}
 
 -- | Static length byte arrays
 --
@@ -23,18 +26,8 @@ module TWC.Crypto.ByteArrayL
 , BytesL(..)
 
 -- ** type level numbers
-, Nat
-, Add
-, Mul
-, N0
-, N1
-, N2
-, N4
-, N16
-, N32
-, N64
-, N66
 , toInt
+, type (≤)
 ) where
 
 import Control.Applicative hiding (empty)
@@ -42,37 +35,40 @@ import Control.Arrow
 import Control.Monad
 
 import Data.Monoid.Unicode
+import Data.Proxy
 
 import Prelude hiding (splitAt, length, take, drop)
 import Prelude.Unicode
 
 import TWC.Crypto.ByteArray
 
-import TypeLevel.Number.Nat
-import TypeLevel.Number.Nat.Num
+import GHC.TypeLits
 
 type BackendByteArrayL = ByteArrayL BackendByteArray
 
 -- -------------------------------------------------------------------------- --
 
-newtype ByteArrayL α n = ByteArrayL α
+newtype ByteArrayL α (n ∷ Nat) = ByteArrayL α
     deriving (Eq, Ord, Show, Code16, Code64)
 
-instance (Nat n, ByteArray α) ⇒ Bytes (ByteArrayL α n) where
+instance (ByteArray α, KnownNat n) ⇒ Bytes (ByteArrayL α n) where
     type ByteArrayImpl (ByteArrayL α n) = α
     toBytes (ByteArrayL bytes) = bytes
     fromBytes a = ByteArrayL <$> (check =<< Right a)
         where
-        e = toInt (undefined ∷ n) ∷ Int
+        e = toInt (Proxy ∷ Proxy n) ∷ Int
         check x = do
             let l = length x
-            if l ≡ toInt (undefined ∷ n)
+            if l ≡ toInt (Proxy ∷ Proxy n)
                 then Right x
                 else Left $ "wrong length: expected " ⊕ show e ⊕ " got " ⊕ show l
 
     -- Allows specialization elsewhere
     {-# INLINEABLE toBytes #-}
     {-# INLINEABLE fromBytes #-}
+
+toInt ∷ ∀ ν proxy α. (KnownNat ν, Integral α) => proxy ν -> α
+toInt = fromIntegral ∘ natVal
 
 {-
 instance (Nat n, Code64 α, ByteArray α) ⇒ Code64 (ByteArrayL α n) where
@@ -90,91 +86,76 @@ instance (Nat n, Code16 α, ByteArray α) ⇒ Code16 (ByteArrayL α n) where
     {-# INLINEABLE from16 #-}
 -}
 
+type (≤) α β = (<=) α β
+
 lengthL
-    ∷ ∀ β n . Nat n
+    ∷ ∀ β n . KnownNat n
     ⇒ ByteArrayL β n
     → Int
-lengthL _ = toInt (undefined ∷ n)
+lengthL _ = toInt (Proxy ∷ Proxy n)
 {-# INLINEABLE lengthL #-}
 
-emptyL ∷ ByteArray β ⇒ ByteArrayL β N0
+emptyL ∷ ByteArray β ⇒ ByteArrayL β 0
 emptyL = ByteArrayL empty
 {-# INLINABLE emptyL #-}
 
 randomBytesL
-    ∷ ∀ β n . (ByteArray β, Nat n)
-    ⇒ IO (ByteArrayL β n)
-randomBytesL = ByteArrayL <$> randomBytes (toInt (undefined ∷ n))
+    ∷ ∀ β ν . (KnownNat ν, ByteArray β)
+    ⇒ IO (ByteArrayL β ν)
+randomBytesL = ByteArrayL <$> randomBytes (toInt (Proxy ∷ Proxy ν))
 {-# INLINABLE randomBytesL #-}
 
 dropL
-    ∷ ∀ β m n i . (ByteArray β, Nat m, Nat n, Nat i, LesserEq i m, Sub m i ~ n)
-    ⇒ i
+    ∷ ∀ β i m n proxy. (KnownNat i, ByteArray β, i ≤ m, (m - i) ~ n)
+    ⇒ proxy i
     → ByteArrayL β m
     → ByteArrayL β n
-dropL i (ByteArrayL a) = ByteArrayL $ drop (toInt (undefined ∷ i)) a
-    where
-    _n ∷ n
-    _n = subN (undefined ∷ m) i
+dropL i (ByteArrayL a) = ByteArrayL $ drop (toInt i) a
 {-# INLINEABLE dropL #-}
 
 dropEndL
-    ∷ ∀ β m n i . (ByteArray β, Nat i, Nat m, LesserEq i m, Sub m i ~ n)
-    ⇒ i
+    ∷ ∀ β i m n proxy. (KnownNat i, ByteArray β, i ≤ m, (m - i) ~ n)
+    ⇒ proxy i
     → ByteArrayL β m
     → ByteArrayL β n
-dropEndL i (ByteArrayL a) = ByteArrayL $ dropEnd (toInt (undefined ∷ i)) a
-    where
-    _n ∷ n
-    _n = subN (undefined ∷ m) i
+dropEndL i (ByteArrayL a) = ByteArrayL $ dropEnd (toInt i) a
 {-# INLINEABLE dropEndL #-}
 
 takeL
-    ∷ ∀ β m n . (ByteArray β, Nat m, Nat n, LesserEq n m)
+    ∷ ∀ β m n. (KnownNat n, ByteArray β, n ≤ m)
     ⇒ ByteArrayL β m
     → ByteArrayL β n
-takeL (ByteArrayL a) = ByteArrayL $ take (toInt (undefined ∷ n)) a
+takeL (ByteArrayL a) = ByteArrayL $ take (toInt (Proxy ∷ Proxy n)) a
 {-# INLINEABLE takeL #-}
 
 takeEndL
-    ∷ ∀ β m n . (ByteArray β, Nat m, Nat n, LesserEq n m)
+    ∷ ∀ β m n. (KnownNat n, ByteArray β, n ≤ m)
     ⇒ ByteArrayL β m
     → ByteArrayL β n
-takeEndL (ByteArrayL a) = ByteArrayL $ takeEnd (toInt (undefined ∷ n)) a
+takeEndL (ByteArrayL a) = ByteArrayL $ takeEnd (toInt (Proxy ∷ Proxy n)) a
 {-# INLINEABLE takeEndL #-}
 
 splitL
-    ∷ ∀ β m n o . (ByteArray β, Nat m, Nat n, Nat o, LesserEq n m, Sub m n ~ o)
+    ∷ ∀ β m n o. (KnownNat n, ByteArray β, n ≤ m, (m - n) ~ o)
     ⇒ ByteArrayL β m
     → (ByteArrayL β n, ByteArrayL β o)
-splitL (ByteArrayL a) = (ByteArrayL *** ByteArrayL) $ splitAt (toInt (undefined ∷ n)) a
-    where
-    _o ∷ o
-    _o = subN (undefined ∷ m) (undefined ∷ n)
+splitL (ByteArrayL a) = (ByteArrayL *** ByteArrayL) $ splitAt (toInt (Proxy ∷ Proxy n)) a
 {-# INLINABLE splitL #-}
 
 concatL
-    ∷ ∀ β m n x . (ByteArray β, Nat m, Nat n, Add m n ~ x)
+    ∷ (ByteArray β, (m + n) ~ x)
     ⇒ ByteArrayL β m
     → ByteArrayL β n
     → ByteArrayL β x
 concatL (ByteArrayL a) (ByteArrayL b) = ByteArrayL $ a ⊕ b
-    where
-    _x ∷ x
-    _x = addN (undefined ∷ m) (undefined ∷ n)
 {-# INLINABLE concatL #-}
 
-type N32 = Mul N4 N8
-type N16 = Mul N2 N8
-type N64 = Mul N8 N8
-type N66 = Add N2 N64
-
-class (Bytes α, Nat (ByteLengthL α)) ⇒ BytesL α where
-    type ByteLengthL α
+class (Bytes α) ⇒ BytesL α where
+    type ByteLengthL α ∷ Nat
     toBytesL ∷ α → ByteArrayL (ByteArrayImpl α) (ByteLengthL α)
     fromBytesL ∷ ByteArrayL (ByteArrayImpl α) (ByteLengthL α) → Either String α
 
-instance (ByteArray α, Nat n) ⇒ BytesL (ByteArrayL α n) where
+instance (KnownNat n, ByteArray α) ⇒ BytesL (ByteArrayL α n) where
     type ByteLengthL (ByteArrayL α n) = n
     toBytesL = id
     fromBytesL = Right
@@ -183,8 +164,8 @@ instance (ByteArray α, Nat n) ⇒ BytesL (ByteArrayL α n) where
     {-# INLINABLE fromBytesL #-}
 
 -- TODO:
-{-# SPECIALIZE lengthL ∷ ∀ n . Nat n ⇒ ByteArrayL BackendByteArray n → Int #-}
-{-# SPECIALIZE emptyL ∷ ByteArrayL BackendByteArray N0 #-}
+{-# SPECIALIZE lengthL ∷ ∀ n . KnownNat n ⇒ ByteArrayL BackendByteArray n → Int #-}
+{-# SPECIALIZE emptyL ∷ ByteArrayL BackendByteArray 0 #-}
 -- NOTE SPECIALIZE should be RULES now (vhanquez)
 
 {-

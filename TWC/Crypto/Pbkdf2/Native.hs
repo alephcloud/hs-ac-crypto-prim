@@ -12,10 +12,13 @@ module TWC.Crypto.Pbkdf2.Native
 ) where
 
 import Data.ByteString (ByteString)
+import Data.Proxy
 
 import Control.Concurrent
 import Control.Monad
 import qualified Crypto.PBKDF.Core as PB
+
+import GHC.TypeLits
 
 import TWC.Crypto.ByteArray
 import TWC.Crypto.ByteArrayL
@@ -33,12 +36,12 @@ pbkdf2Sha512
 pbkdf2Sha512 = pbkdf2
 
 pbkdf2Sha512L
-    ∷ ∀ m . Nat m
+    ∷ ∀ m. KnownNat m
     ⇒ ByteString    -- ^ password
     → ByteString    -- ^ salt
     → Int           -- ^ number of rounds
     → ByteArrayL ByteString m
-pbkdf2Sha512L password salt rounds = either error id ∘ fromBytes $ pbkdf2 password salt rounds (toInt (undefined ∷ m))
+pbkdf2Sha512L password salt rounds = either error id ∘ fromBytes $ pbkdf2 password salt rounds (toInt (Proxy ∷ Proxy m))
 
 type ByteStringResultCallback = ByteString → IO ()
 
@@ -60,7 +63,7 @@ type ByteArrayLResultCallback n = ByteArrayL ByteString n → IO ()
 -- | FIXME: make this exception safe!
 --
 pbkdf2Sha512AsyncL
-    ∷ Nat n
+    ∷ KnownNat n
     ⇒ ByteString                 -- ^ password
     → ByteString                 -- ^ salt
     → Int                        -- ^ number of rounds

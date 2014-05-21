@@ -4,6 +4,8 @@
 {-# LANGUAGE PackageImports #-}
 {-# LANGUAGE TypeFamilies #-}
 {-# LANGUAGE UndecidableInstances #-}
+{-# LANGUAGE DataKinds #-}
+{-# LANGUAGE TypeOperators #-}
 
 -- | sjcl.mode.cbc
 --
@@ -32,15 +34,16 @@ import Crypto.Cipher.AES
 
 import Data.ByteString (ByteString)
 import qualified Data.ByteString as B
+import Data.Proxy
 import Data.Monoid.Unicode
+
+import GHC.TypeLits
 
 import Prelude.Unicode
 
 import TWC.Crypto.Codec
 import TWC.Crypto.ByteArray
 import TWC.Crypto.ByteArrayL
-
-import TypeLevel.Number.Classes
 
 padPKCS7 ∷ Int → ByteString → ByteString
 padPKCS7 blockLength a = case blockLength - (B.length a `rem` blockLength) of
@@ -88,13 +91,13 @@ instance BytesL AesIV where
     toBytesL (AesIV bytes) = toBytesL bytes
     fromBytesL = fmap AesIV ∘ fromBytesL
 
-type AesKey256Length = N32
+type AesKey256Length = 32
 
 generateAesKey256 ∷ IO AesKey256
 generateAesKey256 = AesKey256 <$> randomBytesL
 
 aesKey256Length ∷ Int
-aesKey256Length = toInt (undefined ∷ AesKey256Length)
+aesKey256Length = toInt (Proxy ∷ Proxy AesKey256Length)
 
 generateAesIV ∷ IO AesIV
 generateAesIV = AesIV <$> randomBytesL
@@ -104,10 +107,10 @@ type AesIVLength = AesBlockLength
 aesIVLength ∷ Int
 aesIVLength = aesBlockLength
 
-type AesBlockLength = N16
+type AesBlockLength = 16
 
 aesBlockLength ∷ Int
-aesBlockLength = toInt (undefined ∷ AesBlockLength)
+aesBlockLength = toInt (Proxy ∷ Proxy AesBlockLength)
 
 -- | AES-256 encryption with CBC mode and PKCS#5 padding
 --
@@ -133,11 +136,11 @@ aes256CbcDecryptNoPad ∷ AesKey256 → AesIV → ByteString → ByteString
 aes256CbcDecryptNoPad k iv d =
     decryptCBC (initAES (toBytes k ∷ ByteString)) (toBytes iv ∷ ByteString) d
 
-type family AesSize n
-type instance AesSize n = AesSize' n AesBlockLength (Compare n AesBlockLength)
+type family AesSize (n ∷ Nat) ∷ Nat
+type instance AesSize n = AesSize' n AesBlockLength (CmpNat n AesBlockLength)
 
-type family AesSize' n m b
-type instance AesSize' n m IsGreater = AesSize' n (Add m AesBlockLength) (Compare n (Add m AesBlockLength))
-type instance AesSize' n m IsEqual = m
-type instance AesSize' n m IsLesser = m
+type family AesSize' (n ∷ Nat) (m ∷ Nat) (b ∷ Ordering) ∷ Nat
+type instance AesSize' n m GT = AesSize' n (m + AesBlockLength) (CmpNat n (m + AesBlockLength))
+type instance AesSize' n m EQ = m
+type instance AesSize' n m LT = m
 

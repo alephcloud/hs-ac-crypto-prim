@@ -24,7 +24,6 @@ module TWC.Crypto.Utils
 , splitHalfL
 , HalfF
 , HalfC
-, (:+:)
 , (%)
 
 -- * Binary Parser
@@ -51,7 +50,11 @@ import Control.Applicative hiding (empty)
 import Control.Arrow hiding (left, right)
 
 import Data.Monoid.Unicode
+import Data.Proxy
+import Data.Type.Equality(type (==))
 import Data.Word (Word8)
+
+import GHC.TypeLits
 
 import Prelude hiding (splitAt, length)
 import Prelude.Unicode
@@ -60,8 +63,6 @@ import TWC.Crypto.ByteArray
 import TWC.Crypto.ByteArrayL
 import TWC.Crypto.Sha
 import TWC.Crypto.Aes
-
-import qualified TypeLevel.Number.Nat as N
 
 -- -------------------------------------------------------------------------- --
 -- * Utils
@@ -96,7 +97,7 @@ padLeft a i b
     | otherwise = b
 
 (%)
-    ∷ (N.Nat n, N.Nat m, N.Nat o, N.Add n m ~ o)
+    ∷ ((n + m) ~ o)
     ⇒ BackendByteArrayL n
     → BackendByteArrayL m
     → BackendByteArrayL o
@@ -114,26 +115,61 @@ splitHalf s = splitAt (length s `div` 2) s
 -- is one byte shorter than the second component.
 --
 splitHalfL
-    ∷ ∀ n m0 m1 . (N.Nat n, N.Nat m0, N.Nat m1, N.LesserEq m0 n, m1 ~ N.Sub n m0, N.Add m0 m1 ~ n, m0 ~ HalfF n, m1 ~ HalfC n)
+    -- ∷ ∀ n m0 m1 . (m0 ≤ n, m1 ~ (n - m0), (m0 + m1) ~ n, (m0 ~ HalfF n, m1 ~ HalfC n)
+    ∷ ∀ n m0 m1 . (KnownNat m0, m0 ≤ n, m1 ~ (n - m0), (m0 + m1) ~ n, HalfF n ~ m0, HalfC n ~ m1)
     ⇒ BackendByteArrayL n
     → (BackendByteArrayL m0, BackendByteArrayL m1)
 splitHalfL n = splitL n
 
--- | HalfF n is floor(n/2)
+-- | @HalfF n ≡ floor (n/2)@
 --
-type family HalfF n ∷ *
-type instance HalfF N.Z = N.Z
-type instance HalfF (N.O m) = m
-type instance HalfF (N.I m) = m
-
--- | HalfF n is ceiling(n/2)
+-- Complexity: @O(n)@
 --
-type family HalfC n ∷ *
-type instance HalfC N.Z = N.Z
-type instance HalfC (N.O m) = m
-type instance HalfC (N.I m) = N.Add m N1
+type family HalfF_ (n ∷ Nat) ∷ Nat where
+    HalfF_ 0 = 0
+    HalfF_ 1 = 0
+    HalfF_ n = HalfF_ (n - 2) + 1
 
-type (:+:) a b = Add a b
+-- | @HalfF n ≡ floor (n/2)@
+--
+-- Complexity: @O(log^2 n)@
+--
+type HalfF (n ∷ Nat) = HalfF0 n 1
+
+type family HalfF0 (n ∷ Nat) (l ∷ Nat) ∷ Nat where
+    HalfF0 0 l = 0
+    HalfF0 1 l = 0
+    HalfF0 n l = HalfF1 (CmpNat n (4 * l)) n l
+
+type family HalfF1 (x ∷ Ordering) (n ∷ Nat) (l ∷ Nat) ∷ Nat where
+    HalfF1 EQ n u = 2 * u
+    HalfF1 GT n u = HalfF0 n (2 * u)
+    HalfF1 LT n u = u + HalfF0 (n - (2 * u)) 1
+
+-- | @HalfC_ n ≡ ceiling (n/2)@
+--
+-- Complexity: @O(n)@
+--
+type family HalfC_ (n ∷ Nat) ∷ Nat where
+    HalfC_ 0 = 0
+    HalfC_ 1 = 1
+    HalfC_ n = HalfC_ (n - 2) + 1
+
+-- | @HalfC n ≡ ceiling (n/2)@
+--
+-- Complexity: @O(log^2 n)@
+--
+type HalfC (n ∷ Nat) = HalfC0 n 1
+
+type family HalfC0 (n ∷ Nat) (l ∷ Nat) ∷ Nat where
+    HalfC0 0 l = 0
+    HalfC0 1 l = 1
+    HalfC0 n l = HalfC1 (CmpNat n (4 * l)) n l
+
+type family HalfC1 (x ∷ Ordering) (n ∷ Nat) (l ∷ Nat) ∷ Nat where
+    HalfC1 EQ n u = 2 * u
+    HalfC1 GT n u = HalfC0 n (2 * u)
+    HalfC1 LT n u = u + HalfC0 (n - (2 * u)) 1
 
 -- -------------------------------------------------------------------------- --
 -- * A simple (yet) non-backtracking deterministic parser for 'ByteArray's
@@ -169,11 +205,11 @@ pTake i = Parser $ \a → if i ≤ length a
 pTakeBytes ∷ (Bytes α) ⇒ Int → Parser (ByteArrayImpl α) α
 pTakeBytes i = pEither fromBytes (pTake i)
 
-pTakeBytesL ∷ ∀ α . (BytesL α, Nat (ByteLengthL α)) ⇒ Parser (ByteArrayImpl α) α
+pTakeBytesL ∷ ∀ α . (KnownNat (ByteLengthL α), BytesL α) ⇒ Parser (ByteArrayImpl α) α
 pTakeBytesL = pEither fromBytesL (pTakeL ∷ Parser (ByteArrayImpl α) (ByteArrayL (ByteArrayImpl α) (ByteLengthL α)))
 
-pTakeL ∷ ∀ α n . (ByteArray α, Nat n) ⇒ Parser α (ByteArrayL α n)
-pTakeL = pEither fromBytes $ pTake (toInt (undefined ∷ n))
+pTakeL ∷ ∀ α n . (KnownNat n, ByteArray α) ⇒ Parser α (ByteArrayL α n)
+pTakeL = pEither fromBytes $ pTake (toInt (Proxy ∷ Proxy n))
 
 pTakeExcept ∷ ByteArray π ⇒ Int → Parser π π
 pTakeExcept i =  Parser $ \a → if i ≤ length a
