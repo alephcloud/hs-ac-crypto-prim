@@ -5,7 +5,7 @@
 Name:                ac-crypto-prim
 Version:             0.1.0.0
 Synopsis:            Alephcloud Crypto Library
-description:                     
+description:
     Twc Crypto Library
 Homepage:            https://corp.alephcloud.com/hackage/package/twc-crypto-prim-native
 License:             AllRightsReserved
