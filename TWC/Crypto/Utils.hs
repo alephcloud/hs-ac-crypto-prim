@@ -47,6 +47,7 @@ module TWC.Crypto.Utils
 ) where
 
 import Control.Applicative hiding (empty)
+import qualified Control.Applicative as AP
 import Control.Arrow hiding (left, right)
 
 import Data.Monoid.Unicode
@@ -298,6 +299,7 @@ instance ByteArray π ⇒ Applicative (Parser π) where
             (Right r, a') → first (fmap r) $ (p1 a')
 
 instance ByteArray π ⇒ Alternative (Parser π) where
+    empty = Parser $ \s → (Left "empty", s)
     (<|>) a b = Parser $ \x → case unBAP a x of
         r@(Right {}, _) → r
         (Left s, _) → case unBAP b x of
