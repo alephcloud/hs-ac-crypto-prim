@@ -51,7 +51,6 @@ import Control.Arrow hiding (left, right)
 
 import Data.Monoid.Unicode
 import Data.Proxy
-import Data.Type.Equality(type (==))
 import Data.Word (Word8)
 
 import GHC.TypeLits
