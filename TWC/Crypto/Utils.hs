@@ -38,7 +38,10 @@ module TWC.Crypto.Utils
 , pListL
 , pTake
 , pTakeAll
+, pTakeAllBytes
+, pRemaining
 , pTakeExcept
+, pTakeExceptBytes
 , pTakeBytesL
 , pTakeBytes
 , pSha512_256
