@@ -30,6 +30,8 @@ module TWC.Crypto.Aes.Native
 , aes256CbcDecrypt
 , aes256CbcDecryptNoPad
 , AesSize
+, padPKCS7
+, unpadPKCS7
 ) where
 
 import Control.Applicative
