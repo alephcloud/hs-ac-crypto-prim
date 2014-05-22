@@ -12,7 +12,7 @@ License:             AllRightsReserved
 License-file:        LICENSE
 Author:              Lars Kuhtz <lars@alephcloud.com>
 Maintainer:          lars@alephcloud.com
-Copyright:           Copyright (c) 2012 AlephCloud, Inc.
+Copyright:           Copyright (c) 2013, 2014 AlephCloud, Inc.
 Category:            Cryptography, AlephCloud
 Build-type:          Simple
 cabal-version: >=1.10

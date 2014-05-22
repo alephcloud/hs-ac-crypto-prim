@@ -1,3 +1,7 @@
+-- ------------------------------------------------------ --
+-- Copyright © 2014 AlephCloud Systems, Inc.
+-- ------------------------------------------------------ --
+
 {-# LANGUAGE CPP #-}
 module TWC.Crypto.Ecc.Ops
 #if defined(ECC_NATIVE)

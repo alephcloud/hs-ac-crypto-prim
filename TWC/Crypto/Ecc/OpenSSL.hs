@@ -1,3 +1,7 @@
+-- ------------------------------------------------------ --
+-- Copyright © 2014 AlephCloud Systems, Inc.
+-- ------------------------------------------------------ --
+
 {-# LANGUAGE UnicodeSyntax #-}
 {-# LANGUAGE GeneralizedNewtypeDeriving #-}
 module TWC.Crypto.Ecc.OpenSSL
@@ -99,7 +103,7 @@ ecY (EcPoint p) = snd $ pointToAffineGFp curve p
 ecIdentity ∷ EcPoint
 ecIdentity = EcPoint $ pointInfinity curve
 
-ecIsIdentity ∷ EcPoint -> Bool
+ecIsIdentity ∷ EcPoint → Bool
 ecIsIdentity (EcPoint p) = pointIsAtInfinity curve p
 
 ecPoint ∷ Bn → Bn → EcPoint

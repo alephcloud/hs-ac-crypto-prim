@@ -1,3 +1,7 @@
+-- ------------------------------------------------------ --
+-- Copyright © 2013, 2014 AlephCloud Systems, Inc.
+-- ------------------------------------------------------ --
+
 {-# LANGUAGE FlexibleInstances #-}
 {-# LANGUAGE TypeSynonymInstances #-}
 {-# LANGUAGE UnicodeSyntax #-}

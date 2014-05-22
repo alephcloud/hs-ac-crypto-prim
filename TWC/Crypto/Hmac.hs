@@ -1,3 +1,7 @@
+-- ------------------------------------------------------ --
+-- Copyright © 2014 AlephCloud Systems, Inc.
+-- ------------------------------------------------------ --
+
 {-# LANGUAGE CPP #-}
 module TWC.Crypto.Hmac
 #if defined(NATIVE)
