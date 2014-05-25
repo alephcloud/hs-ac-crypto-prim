@@ -142,11 +142,9 @@ aes256CbcDecryptNoPad ∷ AesKey256 → AesIV → ByteString → ByteString
 aes256CbcDecryptNoPad k iv d =
     decryptCBC (initAES (toBytes k ∷ ByteString)) (toBytes iv ∷ ByteString) d
 
-type family AesSize (n ∷ Nat) ∷ Nat
-type instance AesSize n = AesSize' n AesBlockLength (CmpNat n AesBlockLength)
-
-type family AesSize' (n ∷ Nat) (m ∷ Nat) (b ∷ Ordering) ∷ Nat
-type instance AesSize' n m GT = AesSize' n (m + AesBlockLength) (CmpNat n (m + AesBlockLength))
-type instance AesSize' n m EQ = m
-type instance AesSize' n m LT = m
+type AesSize n = AesSize' n AesBlockLength (CmpNat n AesBlockLength)
+type family AesSize' (n ∷ Nat) (m ∷ Nat) (b ∷ Ordering) ∷ Nat where
+    AesSize' n m GT = AesSize' n (m + AesBlockLength) (CmpNat n (m + AesBlockLength))
+    AesSize' n m EQ = m
+    AesSize' n m LT = m
 
