@@ -63,12 +63,12 @@ Library
       TWC.Crypto.Ecc.Ops
 
   build-depends:
+      integer-gmp,
       base >= 4.7 && < 5.0,
       base-unicode-symbols >= 0.2.2.4,
       safe >= 0.3.3,
       bytestring >= 0.10.0.2,
       byteable >= 0.1.1,
-      arithmoi >= 0.4.0.3,
       cryptohash >= 0.11.5,
       pbkdf >= 1.1.0.1,
       cipher-aes >= 0.2.5,

@@ -47,7 +47,7 @@ import Crypto.Random
 import qualified Data.ByteString as B
 import Data.Word
 
-import Math.NumberTheory.Moduli
+import GHC.Integer.GMP.Internals
 
 import Prelude.Unicode
 
@@ -96,12 +96,13 @@ bnPower ∷ Bn → Bn → Bn
 bnPower = (^)
 
 bnPowerMod ∷ Bn → Bn → Bn → Bn
-bnPowerMod = powerModInteger
+bnPowerMod = powModSecInteger
 
 bnInverseMod ∷ Bn → Bn → Bn
-bnInverseMod  a b = case invertMod a b of
-    Just r → r
-    Nothing → error "illegal inverse modulus"
+bnInverseMod 0 _ = 0
+bnInverseMod a b = case recipModInteger a b of
+    0 → error "illegal inverse modulus"
+    n → n
 
 bnHalve ∷ Bn → Bn
 bnHalve a = a `div` 2
