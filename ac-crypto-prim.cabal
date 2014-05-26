@@ -3,7 +3,7 @@
 -- ------------------------------------------------------ --
 
 Name:                ac-crypto-prim
-Version:             0.2.0
+Version:             0.2.1
 Synopsis:            Alephcloud Crypto Library
 description:
     Twc Crypto Library
