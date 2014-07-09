@@ -58,6 +58,7 @@ Library
       TWC.Crypto.ByteArrayL
       TWC.Crypto.Codec
       TWC.Crypto.Utils
+      TWC.Crypto.DJB
   other-modules:
       TWC.Crypto.Ecc.Key
       TWC.Crypto.Ecc.Ops
@@ -69,6 +70,7 @@ Library
       safe >= 0.3.3,
       bytestring >= 0.10.0.2,
       byteable >= 0.1.1,
+      securemem,
       cryptohash >= 0.11.5,
       pbkdf >= 1.1.0.1,
       cipher-aes >= 0.2.5,
@@ -117,3 +119,10 @@ Library
        other-modules:      Crypto.Sign.Ed25519
        c-sources:          cbits/ed25519.c
        include-dirs:       cbits cbits/include
+
+   other-modules:     Crypto.Cipher.Salsa
+                    , Crypto.Cipher.ChaCha
+                    , Crypto.MAC.Poly1305
+   C-sources:         cbits/cryptonite_chacha.c
+                    , cbits/cryptonite_salsa.c
+                    , cbits/cryptonite_poly1305.c
