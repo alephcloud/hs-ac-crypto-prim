@@ -1,6 +1,7 @@
 -- all of DJB's suite exported
 -- in one single module.
 --
+{-# LANGUAGE PackageImports #-}
 module TWC.Crypto.DJB
     (
     -- * Signature
@@ -14,6 +15,8 @@ module TWC.Crypto.DJB
     , DhSecretKey
     , DhPublicKey
     , createDhKeypair
+    , createDhPublicKey
+    , createDhSecretKey
     , dh
 
     -- * Ciphers
@@ -35,6 +38,7 @@ module TWC.Crypto.DJB
 
 import Data.ByteString (ByteString)
 import Data.Byteable
+import "crypto-random" Crypto.Random
 import qualified Crypto.Cipher.Salsa as Salsa
 import qualified Crypto.Cipher.ChaCha as ChaCha
 import qualified Crypto.MAC.Poly1305 as Poly1305
@@ -60,6 +64,12 @@ createSignatureKeypair = Ed25519.createKeypair
 
 createDhKeypair :: IO (DhPublicKey, DhSecretKey)
 createDhKeypair = Curve25519.createKeypair
+
+createDhPublicKey :: DhSecretKey -> DhPublicKey
+createDhPublicKey = Curve25519.createPublicKey
+
+createDhSecretKey :: CPRG rng => rng -> (DhSecretKey, rng)
+createDhSecretKey = Curve25519.createSecretKey
 
 sign :: SignSecretKey -> ByteString -> ByteString
 sign = Ed25519.sign

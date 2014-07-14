@@ -312,8 +312,8 @@ static inline int crypto_scalarmult(unsigned char *q,
 }
 
 static const unsigned char basepoint[32] = {9};
-static inline int crypto_scalarmult_base(unsigned char *q,
-                                         const unsigned char *n)
+
+int crypto_scalarmult_base(unsigned char *q, const unsigned char *n)
 {
   return crypto_scalarmult(q,n,basepoint);
 }

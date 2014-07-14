@@ -1,4 +1,5 @@
 {-# LANGUAGE ForeignFunctionInterface #-}
+{-# LANGUAGE PackageImports #-}
 -- |
 -- Module      : Crypto.DH.Curve25519
 -- Copyright   : (c) Austin Seipp 2013
@@ -19,6 +20,8 @@ module Crypto.DH.Curve25519
        ( PublicKey(..)
        , SecretKey(..)
        , createKeypair -- :: IO (PublicKey, SecretKey)
+       , createPublicKey
+       , createSecretKey
        , curve25519    -- :: SecretKey -> PublicKey -> ByteString
        ) where
 import           Foreign.C.Types
@@ -26,11 +29,15 @@ import           Foreign.ForeignPtr       (withForeignPtr)
 import           Foreign.Ptr
 
 import           System.IO.Unsafe         (unsafePerformIO)
+import           Control.Monad            (void)
+import           Control.Applicative      ((<$>))
+import "crypto-random" Crypto.Random 
 
 import           Data.ByteString          as S
 import           Data.ByteString.Internal as SI
 import           Data.ByteString.Unsafe   as SU
 import           Data.Word
+import           Data.Byteable
 
 --------------------------------------------------------------------------------
 
@@ -42,6 +49,12 @@ newtype SecretKey = SecretKey { unSecretKey :: ByteString }
 -- | A 'PublicKey' created by 'createKeypair'.
 newtype PublicKey = PublicKey { unPublicKey :: ByteString }
         deriving (Eq, Show, Ord)
+
+instance Byteable SecretKey where
+    toBytes (SecretKey b) = b
+
+instance Byteable PublicKey where
+    toBytes (PublicKey b) = b
 
 -- | Randomly generate a public and private key for doing
 -- authenticated signing and verification.
@@ -57,6 +70,16 @@ createKeypair = do
 
   return (PublicKey $ SI.fromForeignPtr pk 0 cryptoDhPUBLICKEYBYTES,
           SecretKey $ SI.fromForeignPtr sk 0 cryptoDhSECRETKEYBYTES)
+
+createSecretKey :: CPRG rng => rng -> (SecretKey, rng)
+createSecretKey rng =
+    withRandomBytes rng cryptoDhSECRETKEYBYTES SecretKey
+
+createPublicKey :: SecretKey -> PublicKey
+createPublicKey sk = PublicKey <$>
+    SI.unsafeCreate cryptoDhPUBLICKEYBYTES $ \ptrPub ->
+        withBytePtr sk $ \ptrSec ->
+            void $ c_crypto_scalarmult_base ptrPub ptrSec
 
 curve25519 :: SecretKey -> PublicKey -> ByteString
 curve25519 (SecretKey sk) (PublicKey pk) =
@@ -81,6 +104,9 @@ cryptoDhBYTES = 32
 
 foreign import ccall unsafe "curve25519_dh_keypair"
   c_crypto_dh_keypair :: Ptr Word8 -> Ptr Word8 -> IO CInt
+
+foreign import ccall unsafe "crypto_scalarmult_base"
+  c_crypto_scalarmult_base :: Ptr Word8 -> Ptr Word8 -> IO CInt
 
 foreign import ccall unsafe "curve25519_dh"
   c_crypto_dh :: Ptr Word8 -> Ptr CChar -> Ptr CChar -> IO CInt
