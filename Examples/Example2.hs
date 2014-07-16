@@ -4,6 +4,7 @@ module Main where
 
 import TWC.Crypto.DJB
 import "crypto-random" Crypto.Random
+import Data.Byteable
 import qualified Data.ByteString as B
 import qualified Data.ByteString.Lazy as L
 import qualified Data.ByteString.Lazy.Internal as L
@@ -17,5 +18,7 @@ main = do
     let rng            = cprgCreate entropy :: SystemRNG
         (secretKey, _) = createDhSecretKey rng
         publicKey      = createDhPublicKey secretKey
+
+    putStrLn $ show $ toBytes publicKey
 
     return ()
