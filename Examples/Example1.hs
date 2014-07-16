@@ -2,6 +2,8 @@
 {-# LANGUAGE PackageImports #-}
 module Main where
 
+import TWC.Crypto.ByteArray
+import TWC.Crypto.ByteArrayL
 import TWC.Crypto.DJB
 import "crypto-random" Crypto.Random
 import qualified Data.ByteString as B
@@ -18,7 +20,7 @@ encryptStdin keyFile = do
 
     B.writeFile keyFile key
     
-    let state = chachaInit key nonce
+    let state = chachaInit256 (either error id $ fromBytes key) (either error id $ fromBytes nonce)
     L.interact (runEncrypt nonce state)
   where runEncrypt nonce state lbs =
             L.chunk nonce (loop state lbs)
@@ -36,7 +38,7 @@ decryptStdin keyFile = do
     L.interact (runDecrypt key)
   where runDecrypt key lbs =
             let (nonce, lbs') = L.splitAt 8 lbs
-                state = chachaInit key (L.toStrict nonce)
+                state = chachaInit256 (either error id $ fromBytes key) (either error id $ fromBytes $ L.toStrict nonce)
              in loop state lbs'
         loop state lbs
             | L.null lbs = L.empty
