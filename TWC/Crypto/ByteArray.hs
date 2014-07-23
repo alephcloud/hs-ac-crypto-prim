@@ -25,6 +25,8 @@ import Data.ByteString (ByteString)
 import Data.Monoid
 import Data.Word
 
+import qualified Data.Text as T
+import qualified Data.Text.Encoding as T
 import qualified Data.ByteString as B
 import qualified Data.ByteString.Char8 as B8
 import qualified Data.ByteString.Base16 as B16
@@ -123,6 +125,11 @@ instance Bytes B.ByteString where
 
     {-# INLINABLE toBytes #-}
     {-# INLINABLE fromBytes #-}
+
+instance Bytes T.Text where
+    type ByteArrayImpl T.Text = BackendByteArray
+    toBytes = T.encodeUtf8
+    fromBytes = either (Left . show) Right . T.decodeUtf8'
 
 -- | Move this instance to a separate package?
 --
