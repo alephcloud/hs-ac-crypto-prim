@@ -59,9 +59,21 @@ Library
       TWC.Crypto.Codec
       TWC.Crypto.Utils
       TWC.Crypto.DJB
+
+      PC.Crypto.Prim.Bn
+      PC.Crypto.Prim.Aes
+      PC.Crypto.Prim.Ecc
+      PC.Crypto.Prim.Ecdsa
+      PC.Crypto.Prim.Sha
+      PC.Crypto.Prim.Hmac
+      PC.Crypto.Prim.Pbkdf2
+      PC.Crypto.Prim.DJB
   other-modules:
       TWC.Crypto.Ecc.Key
       TWC.Crypto.Ecc.Ops
+
+      PC.Crypto.Prim.Ecc.Key
+      PC.Crypto.Prim.Ecc.Ops
 
   build-depends:
       integer-gmp,
@@ -93,6 +105,13 @@ Library
                    , TWC.Crypto.Sha.Native
                    , TWC.Crypto.Hmac.Native
                    , TWC.Crypto.Pbkdf2.Native
+
+                   , PC.Crypto.Prim.Native
+                   , PC.Crypto.Prim.Bn.Native
+                   , PC.Crypto.Prim.Aes.Native
+                   , PC.Crypto.Prim.Sha.Native
+                   , PC.Crypto.Prim.Hmac.Native
+                   , PC.Crypto.Prim.Pbkdf2.Native
    if flag(openssl)
      -- link with the C library if openssl is enabled
      if os(mingw32)
@@ -105,12 +124,17 @@ Library
          cpp-options: -DECC_OPENSSL
          other-modules: TWC.Crypto.Ecc.OpenSSL
                       , TWC.Crypto.Ecc.OpenSSLBind
+                      , PC.Crypto.Prim.Ecc.OpenSSL
+                      , PC.Crypto.Prim.Ecc.OpenSSLBind
+
      else
          cpp-options: -DECC_NATIVE
          other-modules: TWC.Crypto.Ecc.Native
+                      , PC.Crypto.Prim.Ecc.Native
    else
        cpp-options: -DECC_NATIVE
        other-modules: TWC.Crypto.Ecc.Native
+                    , PC.Crypto.Prim.Ecc.Native
 
    if flag(curve25519)
        other-modules:      Crypto.DH.Curve25519
