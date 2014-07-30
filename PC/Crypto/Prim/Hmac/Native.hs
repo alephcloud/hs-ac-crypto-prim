@@ -24,8 +24,8 @@ import qualified Data.Byteable as BY (toBytes)
 
 import Prelude.Unicode
 
-import PC.Crypto.Prim.ByteArray
-import PC.Crypto.Prim.ByteArrayL
+import PC.Bytes.ByteArray
+import PC.Bytes.ByteArrayL
 import PC.Crypto.Prim.Sha.Native
 
 -- There is no restriciton on hmac keys other than being bitArray. Hence we

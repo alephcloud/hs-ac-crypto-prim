@@ -64,8 +64,8 @@ import qualified Crypto.MAC.Poly1305 as Poly1305
 import qualified Crypto.DH.Curve25519 as Curve25519
 import qualified Crypto.Sign.Ed25519 as Ed25519
 
-import PC.Crypto.Prim.ByteArray
-import PC.Crypto.Prim.ByteArrayL
+import PC.Bytes.ByteArray
+import PC.Bytes.ByteArrayL
 
 -- FIXME unify signature and dh secret/public keys.
 

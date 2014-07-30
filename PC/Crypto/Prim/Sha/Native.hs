@@ -31,8 +31,8 @@ import Data.Proxy
 
 import Prelude.Unicode
 
-import PC.Crypto.Prim.ByteArray
-import PC.Crypto.Prim.ByteArrayL
+import PC.Bytes.ByteArray
+import PC.Bytes.ByteArrayL
 
 -- -------------------------------------------------------------------------- --
 -- * SHA512

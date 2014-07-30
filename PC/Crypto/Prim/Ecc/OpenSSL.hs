@@ -35,7 +35,7 @@ module PC.Crypto.Prim.Ecc.OpenSSL
 , ecScalarDiv
 ) where
 
-import PC.Crypto.Prim.ByteArrayL
+import PC.Bytes.ByteArrayL
 import PC.Crypto.Prim.Ecc.OpenSSLBind
 import PC.Crypto.Prim.Bn
 

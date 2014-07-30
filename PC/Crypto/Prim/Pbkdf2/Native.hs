@@ -24,8 +24,8 @@ import qualified Crypto.PBKDF.Core as PB
 
 import GHC.TypeLits
 
-import PC.Crypto.Prim.ByteArray
-import PC.Crypto.Prim.ByteArrayL
+import PC.Bytes.ByteArray
+import PC.Bytes.ByteArrayL
 import PC.Crypto.Prim.Hmac.Native
 import PC.Crypto.Prim.Sha.Native
 

@@ -71,13 +71,13 @@ import Prelude.Unicode
 
 import PC.Crypto.Prim.Ecc.Ops
 
-import PC.Crypto.Prim.Codec
-import PC.Crypto.Prim.ByteArray
-import PC.Crypto.Prim.ByteArrayL
+import PC.Bytes.Codec
+import PC.Bytes.ByteArray
+import PC.Bytes.ByteArrayL
 
 import PC.Crypto.Prim.Bn
 
-import PC.Crypto.Prim.Utils
+import PC.Bytes.Utils
 
 -- -------------------------------------------------------------------------- --
 -- * Random 'EcScalar'

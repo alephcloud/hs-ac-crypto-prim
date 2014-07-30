@@ -31,12 +31,12 @@ import GHC.TypeLits
 import Prelude hiding (take, drop)
 import Prelude.Unicode
 
-import PC.Crypto.Prim.ByteArray
-import PC.Crypto.Prim.ByteArrayL
+import PC.Bytes.ByteArray
+import PC.Bytes.ByteArrayL
 import PC.Crypto.Prim.Bn
 import PC.Crypto.Prim.Sha
 
-import PC.Crypto.Prim.Utils
+import PC.Bytes.Utils
 import PC.Crypto.Prim.Ecc
 
 -- -------------------------------------------------------------------------- --

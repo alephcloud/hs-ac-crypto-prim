@@ -51,7 +51,7 @@ import GHC.Integer.GMP.Internals
 
 import Prelude.Unicode
 
-import PC.Crypto.Prim.ByteArray
+import PC.Bytes.ByteArray
 
 type Bn = Integer
 

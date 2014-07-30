@@ -6,11 +6,8 @@
 
 module PC.Crypto.Prim.Native
 (
--- * Fixed length ByteArrays
-  module PC.Crypto.Prim.ByteArrayL
-
 -- * Big Integers
-, module PC.Crypto.Prim.Bn.Native
+  module PC.Crypto.Prim.Bn.Native
 
 -- * SHA512
 , module PC.Crypto.Prim.Sha.Native
@@ -26,7 +23,6 @@ module PC.Crypto.Prim.Native
 
 ) where
 
-import PC.Crypto.Prim.ByteArrayL
 import PC.Crypto.Prim.Bn.Native
 import PC.Crypto.Prim.Hmac.Native
 import PC.Crypto.Prim.Pbkdf2.Native

@@ -62,7 +62,7 @@ module PC.Crypto.Prim.Ecc.Native
 
 import Prelude.Unicode
 import PC.Crypto.Prim.Bn
--- import PC.Crypto.Prim.ByteArrayL (N66)
+-- import PC.Bytes.ByteArrayL (N66)
 
 -- -------------------------------------------------------------------------- --
 -- * Prime order elleptic curve

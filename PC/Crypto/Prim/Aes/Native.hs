@@ -47,9 +47,9 @@ import GHC.TypeLits
 
 import Prelude.Unicode
 
-import PC.Crypto.Prim.Codec
-import PC.Crypto.Prim.ByteArray
-import PC.Crypto.Prim.ByteArrayL
+import PC.Bytes.Codec
+import PC.Bytes.ByteArray
+import PC.Bytes.ByteArrayL
 
 padPKCS7 ∷ Int → ByteString → ByteString
 padPKCS7 blockLength a = case blockLength - (B.length a `rem` blockLength) of
