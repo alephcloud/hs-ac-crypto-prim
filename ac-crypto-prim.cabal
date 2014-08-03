@@ -68,6 +68,7 @@ Library
       PC.Crypto.Prim.Hmac
       PC.Crypto.Prim.Pbkdf2
       PC.Crypto.Prim.DJB
+      PC.Crypto.Prim.ChaCha
       PC.Crypto.Prim.Poly1305
   other-modules:
       TWC.Crypto.Ecc.Key
