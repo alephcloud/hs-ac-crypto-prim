@@ -167,8 +167,10 @@ ecFieldToBytesL = unsafeFromBytes ∘ padLeft 0 curveFieldLength ∘ toBytes
 -- | EcPoiint serialization
 --
 ecPointToBinCompressedL ∷ EcPoint → BackendByteArrayL EcPointLength
-ecPointToBinCompressedL p = prefix % (ecFieldToBytesL ∘ ecX) p
-    where
+ecPointToBinCompressedL p
+    | ecIsIdentity p = error "ecPointToBinCompressedL called with point to infinity"
+    | otherwise      = prefix % (ecFieldToBytesL ∘ ecX) p
+  where
     prefix ∷ BackendByteArrayL 1
     prefix = either error id ∘ fromBytes ∘ fromList $ if (ecY p `mod` 2) ≡ 0 then [2 ∷ Word8] else [3 ∷ Word8]
 
