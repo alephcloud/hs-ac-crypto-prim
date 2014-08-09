@@ -3,7 +3,8 @@
 {-# LANGUAGE ScopedTypeVariables #-}
 module Main where
 
-import PC.Crypto.Prim.Curve25519
+import Data.ByteString.Base64 as BS
+import Crypto.DH.Curve25519 as C2
 import Data.Byteable as B
 import PC.Bytes.ByteArray as BA
 import PC.Bytes.ByteArrayL
@@ -15,15 +16,10 @@ import qualified Data.ByteString.Lazy.Internal as L
 import System.Environment
 import Control.Monad
 
-type SecurityParameter = Int           -- ^ Jeff: specify bounds?
-type Secret            = B.ByteString  -- ^ Jeff: specify bounds?
-{-|
-  Generate a cryptographically strong secret of length nBits
-  Could get used as a symmetric key, hmac key, etc.
-  Or could get used to derive a secret (private) key.
-  Not currently using this, and need to be more efficient in use of RNG
-  Ex: make RNG an optional parameter?
--}
+type SecurityParameter = Int  
+type Secret            = B.ByteString 
+
+-- Note: not currently used
 genRandSecret :: SecurityParameter -> IO Secret
 genRandSecret nBits = do
   pool <- createEntropyPool
@@ -31,37 +27,33 @@ genRandSecret nBits = do
   let (secret, _) = cprgGenerate nBits rng
   return secret
 
--- NOTE: in TWC/Crypto/DJB.hs:
--- type DhSecretKey = Curve25519.SecretKey
--- type DhPublicKey = Curve25519.PublicKey
---
---
-{-|
- - Generate a Diffie-Hellman Public/Private Key Pair.
- - Write them to separate, specified files. 
--}
+-- Note: only used by genDhKeypairFiles
+genDhKeyPairBase64Bytes :: IO (B.ByteString, B.ByteString)
+genDhKeyPairBase64Bytes = do
+  (encPk, encSk) <- createDhKeypair
+  let encPkBase64 = BS.encode $ B.toBytes encPk
+      encSkBase64 = BS.encode $ B.toBytes encSk
+  return (B.toBytes encPkBase64, B.toBytes encSkBase64)
+
+-- Note: only used by genDhKeypairFiles
+writeDhKeypairFiles :: B.ByteString -> B.ByteString -> FilePath -> FilePath -> IO ()
+writeDhKeypairFiles encPkBytes encSkBytes encPkFile encSkFile = do
+  B.writeFile encPkFile encPkBytes
+  B.writeFile encSkFile encSkBytes
+  return ()
+
 genDhKeypairFiles :: FilePath -> FilePath -> IO ()
-genDhKeypairFiles encPkFile encSkFile = do
-  (encPk, encSk) <- createDhKeypair
-  B.writeFile encPkFile $ B.toBytes encPk
-  B.writeFile encSkFile $ B.toBytes encSk
+genDhKeypairFiles encSkFile encPkFile = do
+  (encPkBase64Bytes, encSkBase64Bytes) <- genDhKeyPairBase64Bytes
+  writeDhKeypairFiles encPkBase64Bytes encSkBase64Bytes encPkFile encSkFile
   return ()
 
-roundTripTest :: IO()
-roundTripTest = do
-  (encPk, encSk) <- createDhKeypair
-  let bytePk = B.toBytes encPk
-      byteSk = B.toBytes encSk
-      -- eccPk::DhPublicKey  = (either error id $ fromBytes bytePk)
+testDhRoundTrip :: FilePath -> FilePath -> IO ()
+testDhRoundTrip encSkFile encPkFile = do
+  genDhKeypairFiles encSkFile encPkFile
+  sk <- readDhSk encSkFile
+  pk <- readDhPk encPkFile
   return ()
-
-{-
-genDhKey :: B.ByteString -> B.ByteString -> B.ByteString
-genDhKey sk pk = 
-    TWC.Crypto.DJB.dh ecSk ecPk
-      where ecSk = (either error id $ fromBytes sk)
-            ecPk = (either error id $ fromBytes pk)
--}
 
 encryptStdin :: B.ByteString -> B.ByteString -> IO ()
 encryptStdin key nonce = do
@@ -87,15 +79,36 @@ symEncryptStdin keyFile = do
     B.writeFile keyFile key
     encryptStdin key nonce
 
+pkEncryptStdin :: FilePath -> FilePath -> IO ()
 pkEncryptStdin skFile pkFile = do
-    entropy <- createEntropyPool
-    skBytes <- B.readFile skFile
-    unless (B.length skBytes == 32) $ error "secret key length not 256 bits"
-    pkBytes <- B.readFile pkFile
-    unless (B.length pkBytes == 32) $ error "public key length not 256 bits"
-    let rng1       = cprgCreate entropy :: SystemRNG
-        (nonce, _) = cprgGenerate 8 rng1
-    return ()
+  sourceSk <- readDhSk skFile
+  destPk   <- readDhPk pkFile
+  entropy <- createEntropyPool
+  let rng1       = cprgCreate entropy :: SystemRNG
+      (nonce, _) = cprgGenerate 8 rng1
+      symkey     = dh sourceSk destPk
+  encryptStdin symkey nonce
+  return ()
+
+pkDecryptStdin :: FilePath -> FilePath -> IO ()
+pkDecryptStdin skFile pkFile = do
+  destSk   <- readDhSk skFile
+  sourcePk <- readDhPk pkFile
+  let symkey = dh destSk sourcePk
+  decryptStdin symkey
+  return ()
+
+readDhPk :: FilePath -> IO C2.PublicKey
+readDhPk pkFile = do
+  encPkBase64 <- B.readFile pkFile
+  let pk = C2.PublicKey $ BS.decodeLenient encPkBase64
+  return (pk)
+
+readDhSk :: FilePath -> IO C2.SecretKey
+readDhSk skFile = do
+  encSkBase64 <- B.readFile skFile
+  let sk = C2.SecretKey $ BS.decodeLenient encSkBase64
+  return (sk)
 
 decryptStdin :: B.ByteString -> IO ()
 decryptStdin key = 
@@ -124,8 +137,12 @@ symDecryptStdin keyFile = do
 main = do
     args <- getArgs
     case args of
-        ["keygen",pkFile, skFile] -> genDhKeypairFiles pkFile skFile
+        ["test", skFile, pkFile] -> testDhRoundTrip skFile pkFile
+        ["keygen",skFile, pkFile] -> genDhKeypairFiles skFile pkFile
         ["encrypt",keyFile] -> symEncryptStdin keyFile
         ["decrypt",keyFile] -> symDecryptStdin keyFile
         ["pkencrypt",skFile, pkFile] -> pkEncryptStdin skFile pkFile
+        ["pkdecrypt",skFile, pkFile] -> pkDecryptStdin skFile pkFile
         _         -> error "usage: cipher [encrypt|decrypt] <keyfile>"
+
+
