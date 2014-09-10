@@ -6,6 +6,7 @@ module PC.Crypto.Prim.Curve25519
     , SecretKeyLength
     , PublicKeyLength
     , dh
+    , createKeypair
     , createSecretKey
     , createPublicKey
     ) where
@@ -56,5 +57,8 @@ instance BytesL PublicKey where
 
 dh (SecretKey k) (PublicKey p) = PublicKey $ Curve25519.PublicKey $ Curve25519.curve25519 k p
 
+createKeypair = do
+    (pub, sec) <- Curve25519.createKeypair
+    return (PublicKey pub, SecretKey sec)
 createSecretKey = (SecretKey . snd) `fmap` Curve25519.createKeypair
 createPublicKey (SecretKey k) = PublicKey $ Curve25519.createPublicKey k
