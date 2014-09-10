@@ -2,9 +2,9 @@
 {-# LANGUAGE PackageImports #-}
 module Main where
 
-import TWC.Crypto.ByteArray
-import TWC.Crypto.ByteArrayL
-import TWC.Crypto.DJB
+import PC.Bytes.ByteArray
+import PC.Bytes.ByteArrayL
+import PC.Crypto.Prim.ChaCha
 import "crypto-random" Crypto.Random
 import qualified Data.ByteString as B
 import qualified Data.ByteString.Lazy as L

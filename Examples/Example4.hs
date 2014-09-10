@@ -1,39 +1,37 @@
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE PackageImports #-}
 {-# LANGUAGE ScopedTypeVariables #-}
+{-# LANGUAGE DataKinds #-}
 module Main where
 
 import Data.ByteString.Base64 as BS
-import Crypto.DH.Curve25519 as C2
-import Data.Byteable as B
-import PC.Bytes.ByteArray as BA
+import PC.Crypto.Prim.Curve25519 as C2
+import PC.Crypto.Prim.ChaCha
+import PC.Bytes.ByteArray
 import PC.Bytes.ByteArrayL
-import PC.Crypto.Prim.DJB
-import "crypto-random" Crypto.Random
 import qualified Data.ByteString as B
 import qualified Data.ByteString.Lazy as L
 import qualified Data.ByteString.Lazy.Internal as L
 import System.Environment
 import Control.Monad
+import Control.Applicative
 
-type SecurityParameter = Int  
-type Secret            = B.ByteString 
+type SecurityParameter = 32
+
+newtype Secret = Secret (ByteArrayL B.ByteString SecurityParameter)
 
 -- Note: not currently used
-genRandSecret :: SecurityParameter -> IO Secret
-genRandSecret nBits = do
-  pool <- createEntropyPool
-  let rng = cprgCreate pool :: SystemRNG
-  let (secret, _) = cprgGenerate nBits rng
-  return secret
+genRandSecret :: IO Secret
+genRandSecret = Secret <$> randomBytesL
 
 -- Note: only used by genDhKeypairFiles
 genDhKeyPairBase64Bytes :: IO (B.ByteString, B.ByteString)
 genDhKeyPairBase64Bytes = do
-  (encPk, encSk) <- createDhKeypair
-  let encPkBase64 = BS.encode $ B.toBytes encPk
-      encSkBase64 = BS.encode $ B.toBytes encSk
-  return (B.toBytes encPkBase64, B.toBytes encSkBase64)
+  encSk <- C2.createSecretKey
+  let encPk = C2.createPublicKey encSk
+  let encPkBase64 = BS.encode $ toBytes encPk
+      encSkBase64 = BS.encode $ toBytes encSk
+  return ({-toBytes-} encPkBase64, toBytes encSkBase64)
 
 -- Note: only used by genDhKeypairFiles
 writeDhKeypairFiles :: B.ByteString -> B.ByteString -> FilePath -> FilePath -> IO ()
@@ -55,14 +53,12 @@ testDhRoundTrip encSkFile encPkFile = do
   pk <- readDhPk encPkFile
   return ()
 
-encryptStdin :: B.ByteString -> B.ByteString -> IO ()
+encryptStdin :: ChaChaKey256 -> ChaChaNonce -> IO ()
 encryptStdin key nonce = do
-    let state = 
-         chachaInit256 (either error id $ 
-                        fromBytes key) (either error id $ fromBytes nonce)
+    let state = chachaInit256 key nonce
     L.interact (runEncrypt nonce state)
   where runEncrypt nonce state lbs =
-            L.chunk nonce (loop state lbs)
+            L.chunk (toBytes nonce) (loop state lbs)
         loop state lbs
             | L.null lbs = L.empty
             | otherwise   =
@@ -71,22 +67,18 @@ encryptStdin key nonce = do
                  in L.chunk encrypted (loop nstate l2)
 
 symEncryptStdin keyFile = do
-    entropy <- createEntropyPool
-    let rng1          = cprgCreate entropy :: SystemRNG
-        (key, rng2)   = cprgGenerate 32 rng1
-        (nonce, rng3) = cprgGenerate 8 rng2
+    key   <- either error id . fromBytesL <$> randomBytesL
+    nonce <- either error id . fromBytesL <$> randomBytesL
 
-    B.writeFile keyFile key
+    B.writeFile keyFile (toBytes key)
     encryptStdin key nonce
 
 pkEncryptStdin :: FilePath -> FilePath -> IO ()
 pkEncryptStdin skFile pkFile = do
   sourceSk <- readDhSk skFile
   destPk   <- readDhPk pkFile
-  entropy <- createEntropyPool
-  let rng1       = cprgCreate entropy :: SystemRNG
-      (nonce, _) = cprgGenerate 8 rng1
-      symkey     = dh sourceSk destPk
+  nonce <- either error id . fromBytesL <$> randomBytesL
+  let symkey = either error id . fromBytes . B.take 32 . toBytes $ C2.dh sourceSk destPk
   encryptStdin symkey nonce
   return ()
 
@@ -94,30 +86,28 @@ pkDecryptStdin :: FilePath -> FilePath -> IO ()
 pkDecryptStdin skFile pkFile = do
   destSk   <- readDhSk skFile
   sourcePk <- readDhPk pkFile
-  let symkey = dh destSk sourcePk
+  let symkey = either error id . fromBytes . B.take 32 . toBytes $ C2.dh destSk sourcePk
   decryptStdin symkey
   return ()
 
 readDhPk :: FilePath -> IO C2.PublicKey
 readDhPk pkFile = do
   encPkBase64 <- B.readFile pkFile
-  let pk = C2.PublicKey $ BS.decodeLenient encPkBase64
-  return (pk)
+  let pk = either error id $ fromBytes $ BS.decodeLenient encPkBase64
+  return pk
 
 readDhSk :: FilePath -> IO C2.SecretKey
 readDhSk skFile = do
   encSkBase64 <- B.readFile skFile
-  let sk = C2.SecretKey $ BS.decodeLenient encSkBase64
-  return (sk)
+  let sk = either error id $ fromBytes $ BS.decodeLenient encSkBase64
+  return sk
 
-decryptStdin :: B.ByteString -> IO ()
+decryptStdin :: ChaChaKey256 -> IO ()
 decryptStdin key = 
     L.interact (runDecrypt key)
   where runDecrypt key lbs =
             let (nonce, lbs') = L.splitAt 8 lbs
-                state = 
-                  chachaInit256 (either error id $ fromBytes key) 
-                                (either error id $ fromBytes $ L.toStrict nonce)
+                state = chachaInit256 key (either error id $ fromBytes $ L.toStrict nonce)
              in loop state lbs'
         loop state lbs
             | L.null lbs = L.empty
@@ -129,7 +119,7 @@ decryptStdin key =
 symDecryptStdin keyFile = do
     key <- B.readFile keyFile
     unless (B.length key == 32) $ error "key length must be 256 bits"
-    decryptStdin key
+    decryptStdin (either error id $ fromBytes key)
 
 
 -- |To encrypt, {prog} {key} > {cipher}  which will generate key and cipher
