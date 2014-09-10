@@ -73,11 +73,11 @@ instance BytesL ChaChaNonce where
     toBytesL (ChaChaNonce bytes) = toBytesL bytes
     fromBytesL = fmap ChaChaNonce . fromBytesL
 
-chachaInit256 :: ChaChaKey256 -> ByteString -> ChaCha
-chachaInit256 key = ChaCha.initialize 20 (toBytes key)
+chachaInit256 :: ChaChaKey256 -> ChaChaNonce -> ChaCha
+chachaInit256 key nonce = ChaCha.initialize 20 (toBytes key) (toBytes nonce)
 
-chachaInit128 :: ChaChaKey128 -> ByteString -> ChaCha
-chachaInit128 key = ChaCha.initialize 20 (toBytes key)
+chachaInit128 :: ChaChaKey128 -> ChaChaNonce -> ChaCha
+chachaInit128 key nonce = ChaCha.initialize 20 (toBytes key) (toBytes nonce)
 
 chachaEncrypt :: ChaCha -> ByteString -> (ByteString, ChaCha)
 chachaEncrypt = ChaCha.combine
