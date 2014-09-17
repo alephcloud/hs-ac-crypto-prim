@@ -56,7 +56,6 @@ sha512_256Length = toInt (Proxy ∷ Proxy Sha512_256Length)
 -- -------------------------------------------------------------------------- --
 -- * SHA256 legacy hash function
 
-{-# DEPRECATED sha256Hash "Usage of SHA256 in signatures is deprecated. This function must be used only in legacy code." #-}
 sha256Hash ∷ ByteString → ByteArrayL ByteString Sha256Length
 sha256Hash = either error id ∘ fromBytes ∘ SHA256.hash
 
