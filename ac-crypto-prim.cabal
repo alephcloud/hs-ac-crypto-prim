@@ -47,19 +47,6 @@ Flag ecc_openssl
 
 Library
   exposed-modules:
-      TWC.Crypto.Bn
-      TWC.Crypto.Aes
-      TWC.Crypto.Ecc
-      TWC.Crypto.Ecdsa
-      TWC.Crypto.Sha
-      TWC.Crypto.Hmac
-      TWC.Crypto.Pbkdf2
-      TWC.Crypto.ByteArray
-      TWC.Crypto.ByteArrayL
-      TWC.Crypto.Codec
-      TWC.Crypto.Utils
-      TWC.Crypto.DJB
-
       PC.Crypto.Prim.Bn
       PC.Crypto.Prim.Aes
       PC.Crypto.Prim.Ecc
@@ -72,9 +59,6 @@ Library
       PC.Crypto.Prim.ChaCha
       PC.Crypto.Prim.Poly1305
   other-modules:
-      TWC.Crypto.Ecc.Key
-      TWC.Crypto.Ecc.Ops
-
       PC.Crypto.Prim.Ecc.Key
       PC.Crypto.Prim.Ecc.Ops
 
@@ -103,14 +87,7 @@ Library
 
   if flag(native)
       cpp-options: -DNATIVE
-      other-modules: TWC.Crypto.Native
-                   , TWC.Crypto.Bn.Native
-                   , TWC.Crypto.Aes.Native
-                   , TWC.Crypto.Sha.Native
-                   , TWC.Crypto.Hmac.Native
-                   , TWC.Crypto.Pbkdf2.Native
-
-                   , PC.Crypto.Prim.Native
+      other-modules: PC.Crypto.Prim.Native
                    , PC.Crypto.Prim.Bn.Native
                    , PC.Crypto.Prim.Aes.Native
                    , PC.Crypto.Prim.Sha.Native
@@ -126,19 +103,15 @@ Library
 
      if flag(ecc_openssl)
          cpp-options: -DECC_OPENSSL
-         other-modules: TWC.Crypto.Ecc.OpenSSL
-                      , TWC.Crypto.Ecc.OpenSSLBind
-                      , PC.Crypto.Prim.Ecc.OpenSSL
+         other-modules: PC.Crypto.Prim.Ecc.OpenSSL
                       , PC.Crypto.Prim.Ecc.OpenSSLBind
 
      else
          cpp-options: -DECC_NATIVE
-         other-modules: TWC.Crypto.Ecc.Native
-                      , PC.Crypto.Prim.Ecc.Native
+         other-modules: PC.Crypto.Prim.Ecc.Native
    else
        cpp-options: -DECC_NATIVE
-       other-modules: TWC.Crypto.Ecc.Native
-                    , PC.Crypto.Prim.Ecc.Native
+       other-modules: PC.Crypto.Prim.Ecc.Native
 
    if flag(curve25519)
        other-modules:      Crypto.DH.Curve25519
