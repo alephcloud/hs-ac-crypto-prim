@@ -21,6 +21,7 @@ module Crypto.Sign.Ed25519
          PublicKey(..)       -- :: *
        , SecretKey(..)       -- :: *
        , createKeypair       -- :: IO (PublicKey, SecretKey)
+       , toPublicKey
          -- * Signing and verifying messages
        , sign                -- :: SecretKey -> ByteString -> ByteString
        , verify              -- :: PublicKey -> ByteString -> Bool
@@ -105,6 +106,10 @@ verify (PublicKey pk) xs =
 
         return (r == 0)
 {-# INLINE verify #-}
+
+toPublicKey :: SecretKey -> PublicKey
+toPublicKey (SecretKey sk) =
+    PublicKey $ S.copy (S.drop 32 sk)
 
 --------------------------------------------------------------------------------
 -- Detached signature support

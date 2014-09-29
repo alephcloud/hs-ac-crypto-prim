@@ -51,6 +51,7 @@ Library
       PC.Crypto.Prim.Aes
       PC.Crypto.Prim.Ecc
       PC.Crypto.Prim.Ecdsa
+      PC.Crypto.Prim.Ed25519
       PC.Crypto.Prim.Sha
       PC.Crypto.Prim.Hmac
       PC.Crypto.Prim.Pbkdf2
