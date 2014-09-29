@@ -84,17 +84,16 @@ type ChaChaKey128Length = 16
 type ChaChaKey256Length = 32
 type ChaChaNonceLength = 8
 
-newtype ChaChaKey256 = ChaChaKey256 (ByteArrayL ByteString ChaChaKey256Length)
+newtype ChaChaKey256 = ChaChaKey256 (ByteArrayL ChaChaKey256Length)
     deriving (Eq,Ord,Code64,Code16)
 
-newtype ChaChaKey128 = ChaChaKey128 (ByteArrayL ByteString ChaChaKey128Length)
+newtype ChaChaKey128 = ChaChaKey128 (ByteArrayL ChaChaKey128Length)
     deriving (Eq,Ord,Code64,Code16)
 
-newtype ChaChaNonce = ChaChaNonce (ByteArrayL ByteString ChaChaNonceLength)
+newtype ChaChaNonce = ChaChaNonce (ByteArrayL ChaChaNonceLength)
     deriving (Eq,Ord,Code64,Code16)
 
 instance Bytes ChaChaKey256 where
-    type ByteArrayImpl ChaChaKey256 = ByteString
     toBytes (ChaChaKey256 bytes) = toBytes bytes
     fromBytes = fmap ChaChaKey256 . fromBytes
 
@@ -104,7 +103,6 @@ instance BytesL ChaChaKey256 where
     fromBytesL = fmap ChaChaKey256 . fromBytesL
 
 instance Bytes ChaChaKey128 where
-    type ByteArrayImpl ChaChaKey128 = ByteString
     toBytes (ChaChaKey128 bytes) = toBytes bytes
     fromBytes = fmap ChaChaKey128 . fromBytes
 
@@ -114,7 +112,6 @@ instance BytesL ChaChaKey128 where
     fromBytesL = fmap ChaChaKey128 . fromBytesL
 
 instance Bytes ChaChaNonce where
-    type ByteArrayImpl ChaChaNonce = ByteString
     toBytes (ChaChaNonce bytes) = toBytes bytes
     fromBytes = fmap ChaChaNonce . fromBytes
 
@@ -127,17 +124,16 @@ type SalsaKey128Length = 16
 type SalsaKey256Length = 32
 type SalsaNonceLength = 8
 
-newtype SalsaKey256 = SalsaKey256 (ByteArrayL ByteString SalsaKey256Length)
+newtype SalsaKey256 = SalsaKey256 (ByteArrayL SalsaKey256Length)
     deriving (Eq,Ord,Code64,Code16)
 
-newtype SalsaKey128 = SalsaKey128 (ByteArrayL ByteString SalsaKey128Length)
+newtype SalsaKey128 = SalsaKey128 (ByteArrayL SalsaKey128Length)
     deriving (Eq,Ord,Code64,Code16)
 
-newtype SalsaNonce = SalsaNonce (ByteArrayL ByteString SalsaNonceLength)
+newtype SalsaNonce = SalsaNonce (ByteArrayL SalsaNonceLength)
     deriving (Eq,Ord,Code64,Code16)
 
 instance Bytes SalsaKey256 where
-    type ByteArrayImpl SalsaKey256 = ByteString
     toBytes (SalsaKey256 bytes) = toBytes bytes
     fromBytes = fmap SalsaKey256 . fromBytes
 
@@ -147,7 +143,6 @@ instance BytesL SalsaKey256 where
     fromBytesL = fmap SalsaKey256 . fromBytesL
 
 instance Bytes SalsaKey128 where
-    type ByteArrayImpl SalsaKey128 = ByteString
     toBytes (SalsaKey128 bytes) = toBytes bytes
     fromBytes = fmap SalsaKey128 . fromBytes
 
@@ -157,7 +152,6 @@ instance BytesL SalsaKey128 where
     fromBytesL = fmap SalsaKey128 . fromBytesL
 
 instance Bytes SalsaNonce where
-    type ByteArrayImpl SalsaNonce = ByteString
     toBytes (SalsaNonce bytes) = toBytes bytes
     fromBytes = fmap SalsaNonce . fromBytes
 
@@ -216,11 +210,10 @@ macFinalize = Poly1305.finalize
 
 type MacKeyLength = 32
 
-newtype MacKey = MacKey (ByteArrayL ByteString MacKeyLength)
+newtype MacKey = MacKey (ByteArrayL MacKeyLength)
     deriving (Eq,Ord,Code64,Code16)
 
 instance Bytes MacKey where
-    type ByteArrayImpl MacKey = ByteString
     toBytes (MacKey bytes) = toBytes bytes
     fromBytes = fmap MacKey . fromBytes
 

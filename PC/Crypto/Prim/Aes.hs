@@ -34,10 +34,10 @@ import PC.Bytes.ByteArray
 import PC.Bytes.ByteArrayL
 import PC.Crypto.Prim.Sha (pSha512_256, sha512_256Length, Sha512_256Length)
 
-pAesIV :: (BytesL AesIV) => Parser (ByteArrayImpl AesIV) AesIV
+pAesIV :: (BytesL AesIV) => Parser AesIV
 pAesIV = pTakeBytesL <?> "pAesIV"
 
-pAes256mac :: (BytesL AesIV) => Parser (ByteArrayImpl AesIV) (AesIV, (ByteArrayImpl AesIV), ByteArrayL (ByteArrayImpl AesIV) Sha512_256Length)
+pAes256mac :: (BytesL AesIV) => Parser (AesIV, BackendByteArray, ByteArrayL Sha512_256Length)
 pAes256mac = (,,)
     <$> pAesIV
     <*> pTakeExcept sha512_256Length

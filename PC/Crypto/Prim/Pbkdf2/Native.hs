@@ -44,7 +44,7 @@ pbkdf2Sha512L
     ⇒ ByteString    -- ^ password
     → ByteString    -- ^ salt
     → Int           -- ^ number of rounds
-    → ByteArrayL ByteString m
+    → ByteArrayL m
 pbkdf2Sha512L password salt rounds = either error id ∘ fromBytes $ pbkdf2 password salt rounds (toInt (Proxy ∷ Proxy m))
 
 type ByteStringResultCallback = ByteString → IO ()
@@ -62,7 +62,7 @@ pbkdf2Sha512Async
 pbkdf2Sha512Async password salt rounds size cb _ = void ∘ forkIO $ do
     cb $ pbkdf2Sha512 password salt rounds size
 
-type ByteArrayLResultCallback n = ByteArrayL ByteString n → IO ()
+type ByteArrayLResultCallback n = ByteArrayL n → IO ()
 
 -- | FIXME: make this exception safe!
 --

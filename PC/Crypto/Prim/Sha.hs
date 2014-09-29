@@ -21,5 +21,5 @@ import PC.Bytes.Utils
 import PC.Bytes.ByteArray
 import PC.Bytes.ByteArrayL
 
-pSha512_256 :: ByteArray α => Parser α (ByteArrayL α Sha512_256Length)
+pSha512_256 :: Parser (ByteArrayL Sha512_256Length)
 pSha512_256 = pTakeBytesL <?> "pSha512_256"

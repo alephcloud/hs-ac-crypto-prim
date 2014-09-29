@@ -67,11 +67,10 @@ aesCBCResidual b = either (const Nothing) Just $ fromBytes $ B.drop (len - aesBl
 -- don't enforce this on the type level, still we use
 -- a newtype wrapper to tag this class of bitArray.
 --
-newtype AesKey256 = AesKey256 (ByteArrayL ByteString AesKey256Length)
+newtype AesKey256 = AesKey256 (ByteArrayL AesKey256Length)
     deriving (Eq, Ord, Code64, Code16)
 
 instance Bytes AesKey256 where
-    type ByteArrayImpl AesKey256 = ByteString
     toBytes (AesKey256 bytes) = toBytes bytes
     fromBytes = fmap AesKey256 ∘ fromBytes
 
@@ -84,11 +83,10 @@ instance BytesL AesKey256 where
 -- don't enforce this on the type level, still we use
 -- a newtype wrapper to tag this class of bitArray.
 --
-newtype AesIV = AesIV (ByteArrayL ByteString AesIVLength)
+newtype AesIV = AesIV (ByteArrayL AesIVLength)
     deriving (Eq, Ord)
 
 instance Bytes AesIV where
-    type ByteArrayImpl AesIV = ByteString
     toBytes (AesIV bytes) = toBytes bytes
     fromBytes = fmap AesIV ∘ fromBytes
 

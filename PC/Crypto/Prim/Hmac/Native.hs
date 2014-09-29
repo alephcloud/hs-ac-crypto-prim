@@ -34,10 +34,10 @@ import PC.Crypto.Prim.Sha.Native
 hmacSha512
     ∷ ByteString -- ^ secret key
     → ByteString -- ^ data that is authenticated
-    → ByteArrayL ByteString Sha512Length
+    → ByteArrayL Sha512Length
 hmacSha512 key dat = either error id ∘ fromBytes ∘ BY.toBytes $ HASH.hmacAlg HASH.SHA512 key dat
 
-hmacSha512_256 ∷ ByteString → ByteString → ByteArrayL ByteString Sha512_256Length
+hmacSha512_256 ∷ ByteString → ByteString → ByteArrayL Sha512_256Length
 hmacSha512_256 key dat = takeL $ hmacSha512 key dat
 
 -- -------------------------------------------------------------------------- --
@@ -58,11 +58,11 @@ hmacSha512Update = HASH.hmacUpdate
 
 hmacSha512Finalize
     ∷ HmacSha512Ctx
-    → ByteArrayL ByteString Sha512Length
+    → ByteArrayL Sha512Length
 hmacSha512Finalize = either error id ∘ fromBytes ∘ BY.toBytes ∘ HASH.hmacFinalize
 
 hmacSha512_256Finalize
     ∷ HmacSha512Ctx
-    → ByteArrayL ByteString Sha512_256Length
+    → ByteArrayL Sha512_256Length
 hmacSha512_256Finalize = takeL ∘ hmacSha512Finalize
 

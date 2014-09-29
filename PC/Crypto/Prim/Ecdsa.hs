@@ -51,7 +51,6 @@ ecdsaSignatureLength ∷ Int
 ecdsaSignatureLength = toInt (Proxy ∷ Proxy EcdsaSignatureLength)
 
 instance Bytes EcdsaSignature where
-    type ByteArrayImpl EcdsaSignature = BackendByteArray
     toBytes = toBytes ∘ unEcdsaSignature
     fromBytes = fmap EcdsaSignature ∘ fromBytes
 

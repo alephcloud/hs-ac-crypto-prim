@@ -56,7 +56,6 @@ import PC.Bytes.ByteArray
 type Bn = Integer
 
 instance Bytes Bn where
-    type ByteArrayImpl Bn = B.ByteString
     toBytes = fromList ∘ bnToBytes
     fromBytes = Right ∘ bytesToBn ∘ toList
 

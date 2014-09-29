@@ -30,7 +30,7 @@ import PC.Bytes.ByteArrayL
 
 type Poly1305Ctx = Poly1305.Ctx
 
-newtype Poly1305 = Poly1305 (ByteArrayL ByteString Poly1305Length)
+newtype Poly1305 = Poly1305 (ByteArrayL Poly1305Length)
     deriving (Eq,Ord,Code64,Code16)
 
 macInitialize :: MacKey -> Poly1305Ctx
@@ -48,11 +48,10 @@ mac key bs = either error id $ fromBytes $ Byteable.toBytes $ Poly1305.auth (toB
 type MacKeyLength = 32
 type Poly1305Length = 16
 
-newtype MacKey = MacKey (ByteArrayL ByteString MacKeyLength)
+newtype MacKey = MacKey (ByteArrayL MacKeyLength)
     deriving (Eq,Ord,Code64,Code16)
 
 instance Bytes MacKey where
-    type ByteArrayImpl MacKey = ByteString
     toBytes (MacKey bytes) = toBytes bytes
     fromBytes = fmap MacKey . fromBytes
 
@@ -62,7 +61,6 @@ instance BytesL MacKey where
     fromBytesL = fmap MacKey . fromBytesL
 
 instance Bytes Poly1305 where
-    type ByteArrayImpl Poly1305 = ByteString
     toBytes (Poly1305 p) = toBytes p
     fromBytes b
         | B.length b == 16 = fmap Poly1305 $ fromBytes b

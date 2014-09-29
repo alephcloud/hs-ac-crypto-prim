@@ -32,7 +32,6 @@ type PublicKeyLength = 32
 publicKeyLength = 32
 
 instance Bytes SecretKey where
-    type ByteArrayImpl SecretKey = BackendByteArray
     toBytes (SecretKey (Curve25519.SecretKey bs)) = bs
     fromBytes b = if B.length b == secretKeyLength
                     then Right $ SecretKey $ Curve25519.SecretKey b
@@ -44,7 +43,6 @@ instance BytesL SecretKey where
     fromBytesL = fromBytes . toBytes
 
 instance Bytes PublicKey where
-    type ByteArrayImpl PublicKey = BackendByteArray
     toBytes (PublicKey (Curve25519.PublicKey bs)) = bs
     fromBytes b = if B.length b == publicKeyLength
                     then Right $ PublicKey $ Curve25519.PublicKey b

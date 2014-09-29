@@ -34,17 +34,16 @@ type ChaChaKey128Length = 16
 type ChaChaKey256Length = 32
 type ChaChaNonceLength = 8
 
-newtype ChaChaKey256 = ChaChaKey256 (ByteArrayL ByteString ChaChaKey256Length)
+newtype ChaChaKey256 = ChaChaKey256 (ByteArrayL ChaChaKey256Length)
     deriving (Eq,Ord,Code64,Code16)
 
-newtype ChaChaKey128 = ChaChaKey128 (ByteArrayL ByteString ChaChaKey128Length)
+newtype ChaChaKey128 = ChaChaKey128 (ByteArrayL ChaChaKey128Length)
     deriving (Eq,Ord,Code64,Code16)
 
-newtype ChaChaNonce = ChaChaNonce (ByteArrayL ByteString ChaChaNonceLength)
+newtype ChaChaNonce = ChaChaNonce (ByteArrayL ChaChaNonceLength)
     deriving (Eq,Ord,Code64,Code16)
 
 instance Bytes ChaChaKey256 where
-    type ByteArrayImpl ChaChaKey256 = ByteString
     toBytes (ChaChaKey256 bytes) = toBytes bytes
     fromBytes = fmap ChaChaKey256 . fromBytes
 
@@ -54,7 +53,6 @@ instance BytesL ChaChaKey256 where
     fromBytesL = fmap ChaChaKey256 . fromBytesL
 
 instance Bytes ChaChaKey128 where
-    type ByteArrayImpl ChaChaKey128 = ByteString
     toBytes (ChaChaKey128 bytes) = toBytes bytes
     fromBytes = fmap ChaChaKey128 . fromBytes
 
@@ -64,7 +62,6 @@ instance BytesL ChaChaKey128 where
     fromBytesL = fmap ChaChaKey128 . fromBytesL
 
 instance Bytes ChaChaNonce where
-    type ByteArrayImpl ChaChaNonce = ByteString
     toBytes (ChaChaNonce bytes) = toBytes bytes
     fromBytes = fmap ChaChaNonce . fromBytes
 

@@ -108,7 +108,6 @@ instance BytesL EcScalar where
     fromBytesL = ecScalarFromBytesL
 
 instance Bytes EcScalar where
-    type ByteArrayImpl EcScalar = BackendByteArray
     toBytes = padLeft 0 ecScalarLength ∘ toBytes ∘ ecScalarBn
     fromBytes = fmap ecScalar ∘ fromBytes
 
@@ -138,7 +137,6 @@ ecPointLength = curveFieldLength + 1
 type EcPointLength = CurveFieldLength + 1
 
 instance Bytes EcPoint where
-    type ByteArrayImpl EcPoint = BackendByteArray
     toBytes = toBytes ∘ ecPointToBinCompressedL
     fromBytes = ecPointFromBinCompressedL <=< fromBytes
 
@@ -259,7 +257,6 @@ deriving instance Code64 Bn ⇒ Code64 SecretKey
 deriving instance Code16 Bn ⇒ Code16 SecretKey
 
 instance Bytes SecretKey where
-    type ByteArrayImpl SecretKey = BackendByteArray
     toBytes = toBytes ∘ unSk
     fromBytes = fmap SecretKey ∘ fromBytes
 
@@ -289,7 +286,6 @@ instance Ord PublicKey where
 -- The length of the input determines which encoding is used.
 --
 instance Bytes PublicKey where
-    type ByteArrayImpl PublicKey = BackendByteArray
     toBytes = toBytes ∘ unPk
     fromBytes bytes = PublicKey <$>
         (fromBytes bytes <|>
@@ -357,15 +353,15 @@ getPk sec = PublicKey $ dh sec (PublicKey curveG)
 -- -------------------------------------------------------------------------- --
 -- Parser
 
-pPk ∷ (BytesL PublicKey) ⇒ Parser (ByteArrayImpl PublicKey) PublicKey
+pPk ∷ (BytesL PublicKey) ⇒ Parser PublicKey
 pPk = pTakeBytesL <?> "pPk"
 
-pSk ∷ (BytesL SecretKey) ⇒ Parser (ByteArrayImpl SecretKey) SecretKey
+pSk ∷ (BytesL SecretKey) ⇒ Parser SecretKey
 pSk = pTakeBytesL <?> "pSk"
 
-pScalar ∷ (BytesL EcScalar) ⇒ Parser (ByteArrayImpl EcScalar) EcScalar
+pScalar ∷ (BytesL EcScalar) ⇒ Parser EcScalar
 pScalar = pTakeBytesL <?> "pScalar"
 
-pEcPoint ∷ (BytesL EcPoint) ⇒ Parser (ByteArrayImpl EcPoint) EcPoint
+pEcPoint ∷ (BytesL EcPoint) ⇒ Parser EcPoint
 pEcPoint = pTakeBytesL <?> "pEcPoint"
 
