@@ -53,7 +53,7 @@ instance BytesL PublicKey where
     toBytesL (PublicKey (Curve25519.PublicKey bs)) = unsafeFromBytes $ padLeft 0 publicKeyLength $ toBytes bs
     fromBytesL = fromBytes . toBytes
 
-dh (SecretKey k) (PublicKey p) = PublicKey $ Curve25519.PublicKey $ Curve25519.curve25519 k p
+dh (SecretKey k) (PublicKey p) = Curve25519.curve25519 k p
 
 createKeypair = do
     (pub, sec) <- Curve25519.createKeypair
