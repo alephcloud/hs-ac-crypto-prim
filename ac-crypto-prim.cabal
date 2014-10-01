@@ -27,7 +27,7 @@ Flag native
 
 Flag openssl
   description: build with the openssl library linked in. need to select backend
-  default: False
+  default: True
 
 Flag haste
   description: build using haste backend. not currently supported
@@ -43,7 +43,7 @@ Flag ed25519
 
 Flag ecc_openssl
   description: build ECC using openssl
-  default: False
+  default: True
 
 Library
   exposed-modules:
