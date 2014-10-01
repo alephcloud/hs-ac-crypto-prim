@@ -4,6 +4,7 @@
 
 {-# LANGUAGE UnicodeSyntax #-}
 {-# LANGUAGE GeneralizedNewtypeDeriving #-}
+{-# LANGUAGE DataKinds #-}
 module PC.Crypto.Prim.Ecc.OpenSSL
 (
 -- * Elliptic Curve Mathemtics
@@ -68,7 +69,7 @@ curveR ∷ Bn
 curveR = groupGetOrder curve
 
 -- FIXME
-type CurveFieldLength = N66
+type CurveFieldLength = 66
 type EcFieldLength = CurveFieldLength
 
 curveFieldLength ∷ Int
