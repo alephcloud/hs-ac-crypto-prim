@@ -21,7 +21,9 @@ import qualified Crypto.DH.Curve25519 as Curve25519
 import qualified Data.ByteString as B
 
 newtype SecretKey = SecretKey Curve25519.SecretKey
+    deriving (Show, Eq)
 newtype PublicKey = PublicKey Curve25519.PublicKey
+    deriving (Show, Eq)
 
 type SecretKeyLength = 32
 
