@@ -6,22 +6,29 @@
 
 module Main where
 
-import Crypto.MAC.Poly1305 (Auth (..))
-import TWC.Crypto.DJB
+-- import PC.Crypto.MAC.Poly1305 (Auth (..))
+-- import PC.Crypto.Prim.Poly1305 (Auth (..))
+
+import PC.Bytes.ByteArray
+import PC.Bytes.ByteArrayL
+import PC.Crypto.Prim.ChaCha
+import qualified PC.Crypto.Prim.Curve25519 as Curve25519
+import qualified PC.Crypto.Prim.Ed25519 as Ed25519
+import PC.Crypto.Prim.Poly1305
+--import PC.Crypto.DJB
 
 import Data.ByteString (ByteString)
-import qualified Crypto.DH.Curve25519 as Curve25519
-import Crypto.Cipher.ChaCha (State)
+-- import Crypto.Cipher.ChaCha (State)
 import Crypto.Random.API
 
 type PublicKey = Curve25519.PublicKey
 type SecretKey = Curve25519.SecretKey
 
-genChaChaKey :: SecretKey -> PublicKey -> ByteString
-genChaChaKey sk pk = dh sk pk
+genChaChaKey :: Curve25519.SecretKey -> Curve25519.PublicKey -> ByteString
+genChaChaKey sk pk = Curve25519.dh sk pk
 
-genChaChaState :: ByteString -> State
-genChaChaState symkey = chachaInit symkey nonce
+genChaChaState :: ByteString -> ChaCha
+genChaChaState symkey = chachaInit256 (either error id $ fromBytes symkey) nonce
                           where nonce = "12345678"
 
 --genNonce :: IO ByteString
@@ -54,7 +61,7 @@ poly1305Mac key string =
 type Message = ByteString
 type CipherText = (ByteString, ChaCha)
 
-pkstreamenc :: SecretKey -> PublicKey -> Message -> CipherText
+pkstreamenc :: Curve25519.SecretKey -> Curve25519.PublicKey -> Message -> CipherText
 pkstreamenc sk pk msg = 
     chachaEncrypt chacha_state msg
         where chacha_state = genChaChaState shared_secret
@@ -62,13 +69,13 @@ pkstreamenc sk pk msg =
 
 main :: IO ()
 main = do
-  (pksig, sksig) <- createSignatureKeypair
-  print $ verify pksig (sign sksig "hi")
-  (_, skdh_A) <- createDhKeypair  -- key pair for Alice
-  (pkdh_B, _) <- createDhKeypair  -- key pair for Bob
+  (pksig, sksig) <- Ed25519.createKeypair
+  print $ Ed25519.verify pksig (Ed25519.sign sksig "hi")
+  (_, skdh_A) <- Curve25519.createKeypair  -- key pair for Alice
+  (pkdh_B, _) <- Curve25519.createKeypair  -- key pair for Bob
 
   let shared_secret = genChaChaKey skdh_A pkdh_B
-  let chacha_state = genChaChaState shared_secret 
+  let chacha_state = genChaChaState (either error id $ fromBytes shared_secret)
   let (cipher_text, new_state) = 
           chachaEncrypt chacha_state "hello" 
 
@@ -77,6 +84,6 @@ main = do
   let (plain_text, nnew) = 
           chachaEncrypt chacha_state cipher_text
   print $ plain_text
-  let Auth macmac = mac shared_secret "hello"
+  let macmac =  mac (either error id $ fromBytes shared_secret) "hello"
   print macmac
 
