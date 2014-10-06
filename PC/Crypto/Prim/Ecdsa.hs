@@ -17,6 +17,7 @@ module PC.Crypto.Prim.Ecdsa
 , EcdsaSignatureLength
 , ecdsaSignatureLength
 , sign
+, signWith
 , verify
 , verifyLegacy
 ) where
@@ -64,11 +65,19 @@ sign
     ⇒ SecretKey
     → BackendByteArray
     → μ EcdsaSignature
-sign (SecretKey sk) content = do
+sign sk content = do
     k ← liftIO $ (+ 1) <$> bnRandom (curveR - 1) -- exclude zero
+    return $ signWith sk content k
+
+signWith
+    ∷ SecretKey
+    → BackendByteArray
+    → Bn
+    → EcdsaSignature
+signWith (SecretKey sk) content k =
     let r = (ecX $ ecPointMul curveG (ecScalar k)) `mod` curveR -- we should assert that r ≠ 0. Won't happen...
         s = bnMulMod (sh + (r * skBn)) (bnInverseMod k curveR) curveR
-    return ∘ EcdsaSignature $ toBytesL (ecScalar r) % toBytesL (ecScalar s)
+    in  EcdsaSignature $ toBytesL (ecScalar r) % toBytesL (ecScalar s)
   where
     sh = unsafeFromBytes ∘ take ecFieldLength ∘ toBytes $ hash
     hash = sha512Hash content
