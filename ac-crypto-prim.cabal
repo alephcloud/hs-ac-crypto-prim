@@ -22,110 +22,110 @@ source-repository head
     location: git@github.com:alephcloud/hs-ac-crypto-prim.git
 
 Flag native
-  description: build using native code (no openssl, no haste)
-  default: True
+    description: build using native code (no openssl, no haste)
+    default: True
 
 Flag openssl
-  description: build with the openssl library linked in. need to select backend
-  default: True
+    description: build with the openssl library linked in. need to select backend
+    default: True
 
 Flag haste
-  description: build using haste backend. not currently supported
-  default: False
+    description: build using haste backend. not currently supported
+    default: False
 
 Flag curve25519
-  description: add support for curve 25519 DH
-  default: True
+    description: add support for curve 25519 DH
+    default: True
 
 Flag ed25519
-  description: add support for signature with curve25519
-  default: True
+    description: add support for signature with curve25519
+    default: True
 
 Flag ecc_openssl
-  description: build ECC using openssl
-  default: True
+    description: build ECC using openssl
+    default: True
 
 Library
-  exposed-modules:
-      PC.Crypto.Prim.Bn
-      PC.Crypto.Prim.Aes
-      PC.Crypto.Prim.Ecc
-      PC.Crypto.Prim.Ecdsa
-      PC.Crypto.Prim.Ed25519
-      PC.Crypto.Prim.Sha
-      PC.Crypto.Prim.Hmac
-      PC.Crypto.Prim.Pbkdf2
-      PC.Crypto.Prim.DJB
-      PC.Crypto.Prim.Curve25519
-      PC.Crypto.Prim.ChaCha
-      PC.Crypto.Prim.Poly1305
-  other-modules:
-      PC.Crypto.Prim.Ecc.Key
-      PC.Crypto.Prim.Ecc.Ops
+    exposed-modules:
+        PC.Crypto.Prim.Bn
+        PC.Crypto.Prim.Aes
+        PC.Crypto.Prim.Ecc
+        PC.Crypto.Prim.Ecdsa
+        PC.Crypto.Prim.Ed25519
+        PC.Crypto.Prim.Sha
+        PC.Crypto.Prim.Hmac
+        PC.Crypto.Prim.Pbkdf2
+        PC.Crypto.Prim.DJB
+        PC.Crypto.Prim.Curve25519
+        PC.Crypto.Prim.ChaCha
+        PC.Crypto.Prim.Poly1305
+    other-modules:
+        PC.Crypto.Prim.Ecc.Key
+        PC.Crypto.Prim.Ecc.Ops
 
-  build-depends:
-      integer-gmp,
-      base >= 4.7 && < 5.0,
-      base-unicode-symbols >= 0.2.2.4,
-      safe >= 0.3.3,
-      bytestring >= 0.10.0.2,
-      byteable >= 0.1.1,
-      text,
-      securemem,
-      cryptohash >= 0.11.5,
-      pbkdf >= 1.1.0.1,
-      cipher-aes >= 0.2.5,
-      base64-bytestring >= 1.0.0.1,
-      base16-bytestring >= 0.1.1.5,
-      transformers >= 0.3.0.0,
-      mtl,
-      pc-bytes >= 0.3.0,
-      crypto-random >= 0.0.7
+    build-depends:
+        integer-gmp,
+        base >= 4.7 && < 5.0,
+        base-unicode-symbols >= 0.2.2.4,
+        safe >= 0.3.3,
+        bytestring >= 0.10.0.2,
+        byteable >= 0.1.1,
+        text,
+        securemem,
+        cryptohash >= 0.11.5,
+        pbkdf >= 1.1.0.1,
+        cipher-aes >= 0.2.5,
+        base64-bytestring >= 1.0.0.1,
+        base16-bytestring >= 0.1.1.5,
+        transformers >= 0.3.0.0,
+        mtl,
+        pc-bytes >= 0.3.0,
+        crypto-random >= 0.0.7
 
-  default-language: Haskell2010
+    default-language: Haskell2010
 
-  ghc-options: -Wall
+    ghc-options: -Wall
 
-  if flag(native)
-      cpp-options: -DNATIVE
-      other-modules: PC.Crypto.Prim.Native
-                   , PC.Crypto.Prim.Bn.Native
-                   , PC.Crypto.Prim.Aes.Native
-                   , PC.Crypto.Prim.Sha.Native
-                   , PC.Crypto.Prim.Hmac.Native
-                   , PC.Crypto.Prim.Pbkdf2.Native
-   if flag(openssl)
-     -- link with the C library if openssl is enabled
-     if os(mingw32)
-       extra-libraries: eay32, ssl32, wsock32
-       CC-Options:      -D MINGW32
-     else
-       extra-libraries: crypto, ssl
+    if flag(native)
+        cpp-options: -DNATIVE
+        other-modules: PC.Crypto.Prim.Native
+                     , PC.Crypto.Prim.Bn.Native
+                     , PC.Crypto.Prim.Aes.Native
+                     , PC.Crypto.Prim.Sha.Native
+                     , PC.Crypto.Prim.Hmac.Native
+                     , PC.Crypto.Prim.Pbkdf2.Native
+    if flag(openssl)
+        -- link with the C library if openssl is enabled
+        if os(mingw32)
+            extra-libraries: eay32, ssl32, wsock32
+            CC-Options:      -D MINGW32
+        else
+            extra-libraries: crypto, ssl
 
-     if flag(ecc_openssl)
-         cpp-options: -DECC_OPENSSL
-         other-modules: PC.Crypto.Prim.Ecc.OpenSSL
-                      , PC.Crypto.Prim.Ecc.OpenSSLBind
+        if flag(ecc_openssl)
+            cpp-options: -DECC_OPENSSL
+            other-modules: PC.Crypto.Prim.Ecc.OpenSSL
+                         , PC.Crypto.Prim.Ecc.OpenSSLBind
 
-     else
-         cpp-options: -DECC_NATIVE
-         other-modules: PC.Crypto.Prim.Ecc.Native
-   else
-       cpp-options: -DECC_NATIVE
-       other-modules: PC.Crypto.Prim.Ecc.Native
+        else
+            cpp-options: -DECC_NATIVE
+            other-modules: PC.Crypto.Prim.Ecc.Native
+    else
+        cpp-options: -DECC_NATIVE
+        other-modules: PC.Crypto.Prim.Ecc.Native
 
-   if flag(curve25519)
-       other-modules:      Crypto.DH.Curve25519
-       c-sources:          cbits/curve25519.c
-       include-dirs:       cbits cbits/include
-   if flag(ed25519)
-       other-modules:      Crypto.Sign.Ed25519
-       c-sources:          cbits/ed25519.c
-       include-dirs:       cbits cbits/include
+    if flag(curve25519)
+        other-modules:      Crypto.DH.Curve25519
+        c-sources:          cbits/curve25519.c
+        include-dirs:       cbits cbits/include
+    if flag(ed25519)
+        other-modules:      Crypto.Sign.Ed25519
+        c-sources:          cbits/ed25519.c
+        include-dirs:       cbits cbits/include
 
-   other-modules:     Crypto.Cipher.Salsa
-                    , Crypto.Cipher.ChaCha
-                    , Crypto.MAC.Poly1305
-   C-sources:         cbits/cryptonite_chacha.c
-                    , cbits/cryptonite_salsa.c
-                    , cbits/cryptonite_poly1305.c
+    other-modules:     Crypto.Cipher.Salsa
+                     , Crypto.Cipher.ChaCha
+                     , Crypto.MAC.Poly1305
+    C-sources:         cbits/cryptonite_chacha.c
+                     , cbits/cryptonite_salsa.c
+                     , cbits/cryptonite_poly1305.c
