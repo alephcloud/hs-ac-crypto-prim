@@ -24,26 +24,32 @@ source-repository head
 Flag native
     description: build using native code (no openssl, no haste)
     default: True
+    manual: True
 
 Flag openssl
     description: build with the openssl library linked in. need to select backend
     default: True
+    manual: True
 
 Flag haste
     description: build using haste backend. not currently supported
     default: False
+    manual: True
 
 Flag curve25519
     description: add support for curve 25519 DH
     default: True
+    manual: True
 
 Flag ed25519
     description: add support for signature with curve25519
     default: True
+    manual: True
 
 Flag ecc_openssl
     description: build ECC using openssl
     default: True
+    manual: True
 
 Library
     exposed-modules:
