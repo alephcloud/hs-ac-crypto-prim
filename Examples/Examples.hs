@@ -29,7 +29,7 @@ genChaChaKey sk pk = Curve25519.dh sk pk
 
 genChaChaState :: ByteString -> ChaCha
 genChaChaState symkey = chachaInit256 (either error id $ fromBytes symkey) nonce
-                          where nonce = "12345678"
+                          where nonce = either error id $ fromBytes "12345678"
 
 --genNonce :: IO ByteString
 --genNonce = getSystemEntropy 8
@@ -85,5 +85,5 @@ main = do
           chachaEncrypt chacha_state cipher_text
   print $ plain_text
   let macmac =  mac (either error id $ fromBytes shared_secret) "hello"
-  print macmac
+  print $ toBytes macmac
 
