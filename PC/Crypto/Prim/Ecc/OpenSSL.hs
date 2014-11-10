@@ -1,8 +1,7 @@
 -- ------------------------------------------------------ --
--- Copyright © 2014 AlephCloud Systems, Inc.
+-- Copyright (C) 2014 AlephCloud Systems, Inc.
 -- ------------------------------------------------------ --
 
-{-# LANGUAGE UnicodeSyntax #-}
 {-# LANGUAGE GeneralizedNewtypeDeriving #-}
 {-# LANGUAGE DataKinds #-}
 module PC.Crypto.Prim.Ecc.OpenSSL
@@ -47,44 +46,44 @@ type EcCurve = Group
 instance Eq EcPoint where
     (EcPoint a) == (EcPoint b) = pointEq curve a b
 
-curve ∷ EcCurve
+curve :: EcCurve
 curve = maybe (error "cannot get openssl curve p521") id
       $ groupFromCurveName
       $ maybe (error "cannot convert text to nid") id
       $ txt2Nid "1.3.132.0.35"
 
-curveP ∷ Bn
+curveP :: Bn
 curveP = let (p,_,_) = groupGetCurveGFp curve in p
 
-curveA ∷ Bn
+curveA :: Bn
 curveA = let (_,a,_) = groupGetCurveGFp curve in a
 
-curveB ∷ Bn
+curveB :: Bn
 curveB = let (_,_,b) = groupGetCurveGFp curve in b
 
-curveG ∷ EcPoint
+curveG :: EcPoint
 curveG = EcPoint $ groupGetGenerator curve
 
-curveR ∷ Bn
+curveR :: Bn
 curveR = groupGetOrder curve
 
 -- FIXME
 type CurveFieldLength = 66
 type EcFieldLength = CurveFieldLength
 
-curveFieldLength ∷ Int
+curveFieldLength :: Int
 curveFieldLength = bnLength curveR
 
-ecFieldLength ∷ Int
+ecFieldLength :: Int
 ecFieldLength = curveFieldLength
 
-newtype EcScalar = EcScalar { ecScalarBn ∷ Bn }
+newtype EcScalar = EcScalar { ecScalarBn :: Bn }
     deriving (Eq, Ord, Show, Integral, Real, Enum)
 
-ecScalar ∷ Bn → EcScalar
+ecScalar :: Bn -> EcScalar
 ecScalar i = EcScalar (i `mod` curveR)
 
-ecScalarDiv ∷ Bn → Bn → Bn
+ecScalarDiv :: Bn -> Bn -> Bn
 ecScalarDiv a b = (a * bnInverseMod b curveP) `mod` curveP
 
 instance Num EcScalar where
@@ -95,40 +94,40 @@ instance Num EcScalar where
     signum a = if a == 0 then 0 else 1
     fromInteger = ecScalar . fromInteger
 
-ecX ∷ EcPoint → Bn
+ecX :: EcPoint -> Bn
 ecX (EcPoint p) = fst $ pointToAffineGFp curve p
 
-ecY ∷ EcPoint → Bn
+ecY :: EcPoint -> Bn
 ecY (EcPoint p) = snd $ pointToAffineGFp curve p
 
-ecIdentity ∷ EcPoint
+ecIdentity :: EcPoint
 ecIdentity = EcPoint $ pointInfinity curve
 
-ecIsIdentity ∷ EcPoint → Bool
+ecIsIdentity :: EcPoint -> Bool
 ecIsIdentity (EcPoint p) = pointIsAtInfinity curve p
 
-ecPoint ∷ Bn → Bn → EcPoint
+ecPoint :: Bn -> Bn -> EcPoint
 ecPoint x y = EcPoint $ pointFromAffineGFp curve (x,y)
 
 -- | b.a
 --
 -- FIXME reorder arguments
 --
-ecPointMul ∷ EcPoint → EcScalar → EcPoint
+ecPointMul :: EcPoint -> EcScalar -> EcPoint
 ecPointMul (EcPoint a) (EcScalar b) = EcPoint $ pointMul curve a b
 
-ecPointDouble ∷ EcPoint → EcPoint
+ecPointDouble :: EcPoint -> EcPoint
 ecPointDouble (EcPoint a) = EcPoint $ pointDbl curve a
 
 -- | b.a + c.d
 --
 -- FIXME reorder arguments
 -- VH: probably can use something faster in the binding
-ecPointMul2 ∷ EcPoint → EcScalar → EcScalar → EcPoint → EcPoint
+ecPointMul2 :: EcPoint -> EcScalar -> EcScalar -> EcPoint -> EcPoint
 ecPointMul2 a b c d
     | ecIsIdentity a || b == 0 = d `ecPointMul` c
     | ecIsIdentity d || c == 0 = a `ecPointMul` b
     | otherwise                = ecPointMul a b `ecPointAdd` ecPointMul d c
 
-ecPointAdd ∷ EcPoint → EcPoint → EcPoint
+ecPointAdd :: EcPoint -> EcPoint -> EcPoint
 ecPointAdd (EcPoint a) (EcPoint b) = EcPoint $ pointAdd curve a b

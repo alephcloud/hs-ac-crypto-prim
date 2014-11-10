@@ -1,5 +1,5 @@
 -- ------------------------------------------------------ --
--- Copyright © 2014 AlephCloud Systems, Inc.
+-- Copyright (C) 2014 AlephCloud Systems, Inc.
 -- ------------------------------------------------------ --
 
 module PC.Crypto.Prim.Ecc

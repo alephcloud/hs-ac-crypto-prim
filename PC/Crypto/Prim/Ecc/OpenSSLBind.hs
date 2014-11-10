@@ -1,5 +1,5 @@
 -- ------------------------------------------------------ --
--- Copyright © 2013 AlephCloud Systems, Inc.
+-- Copyright (C) 2013 AlephCloud Systems, Inc.
 -- ------------------------------------------------------ --
 
 {-# LANGUAGE ForeignFunctionInterface #-}

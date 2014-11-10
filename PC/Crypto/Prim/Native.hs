@@ -1,8 +1,6 @@
 -- ------------------------------------------------------ --
--- Copyright © 2013, 2014 AlephCloud Systems, Inc.
+-- Copyright (C) 2013, 2014 AlephCloud Systems, Inc.
 -- ------------------------------------------------------ --
-
-{-# LANGUAGE UnicodeSyntax #-}
 
 module PC.Crypto.Prim.Native
 (
