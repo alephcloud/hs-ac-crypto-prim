@@ -10,21 +10,22 @@
 {-# LANGUAGE TypeFamilies #-}
 {-# LANGUAGE UndecidableInstances #-}
 {-# LANGUAGE GeneralizedNewtypeDeriving #-}
+{-# LANGUAGE ViewPatterns #-}
 
 module PC.Crypto.Prim.Ecdsa
 ( EcdsaSignature(..)
-, EcdsaSignatureLength
-, ecdsaSignatureLength
 , sign
 , signWith
 , verify
-, verifyLegacy
 ) where
 
 import Control.Applicative
 import Control.Monad.IO.Class
 
+import Data.Byteable (constEqBytes)
+import Data.Monoid
 import Data.Proxy
+import qualified Data.ByteString as B (length, splitAt)
 
 import GHC.TypeLits
 
@@ -41,76 +42,73 @@ import PC.Crypto.Prim.Ecc
 -- -------------------------------------------------------------------------- --
 -- * ECDSA
 
-newtype EcdsaSignature = EcdsaSignature { unEcdsaSignature :: BackendByteArrayL EcdsaSignatureLength }
-    deriving (Show, Eq, Ord, Code64, Code16)
+data EcdsaSignature curve = EcdsaSignature
+    { ecdsa_r :: !(EcScalar curve)
+    , ecdsa_s :: !(EcScalar curve)
+    } deriving (Show)
 
-type EcdsaSignatureLength = EcScalarLength + EcScalarLength
+instance EcCurve curve => Eq (EcdsaSignature curve) where
+    (EcdsaSignature r1 s1) == (EcdsaSignature r2 s2) = (toInt rEq + toInt sEq) == 2
+      where rEq = toBytes r1 `constEqBytes` toBytes r2
+            sEq = toBytes s1 `constEqBytes` toBytes s2
+            toInt :: Bool -> Int
+            toInt False = 0
+            toInt True  = 1
 
-ecdsaSignatureLength :: Int
-ecdsaSignatureLength = toInt (Proxy :: Proxy EcdsaSignatureLength)
+instance EcCurve curve => Bytes (EcdsaSignature curve) where
+    toBytes (EcdsaSignature r s) = toBytes r `mappend` toBytes s
+    fromBytes bs
+        | odd len   = Left "invalid size ECDSA signature. not even"
+        | otherwise = do let (r_bs, s_bs) = B.splitAt (len `div` 2) bs
+                         r <- fromBytes r_bs
+                         s <- fromBytes s_bs
+                         if r == 0 || s == 0
+                            then Left "Invalid ECDSA signature. r or s constraint invalid."
+                            else Right $ EcdsaSignature { ecdsa_r = r, ecdsa_s = s }
+      where len = B.length bs
 
-instance Bytes EcdsaSignature where
-    toBytes = toBytes . unEcdsaSignature
-    fromBytes = fmap EcdsaSignature . fromBytes
-
-instance BytesL EcdsaSignature where
-    type ByteLengthL EcdsaSignature = EcdsaSignatureLength
-    toBytesL = unEcdsaSignature
-    fromBytesL = Right . EcdsaSignature
-
-sign
-    :: MonadIO u
-    => SecretKey
-    -> BackendByteArray
-    -> u EcdsaSignature
+sign :: (EcCurve curve, MonadIO io)
+     => SecretKey curve           -- ^ secret key to sign with
+     -> BackendByteArray          -- ^ data to sign
+     -> io (EcdsaSignature curve)
 sign sk content = do
-    k <- liftIO $ (+ 1) <$> bnRandom (curveR - 1) -- exclude zero
+    k <- ecScalarRandomNonZero
     return $ signWith sk content k
 
-signWith
-    :: SecretKey
-    -> BackendByteArray
-    -> Bn
-    -> EcdsaSignature
+signWith :: EcCurve curve
+         => SecretKey curve
+         -> BackendByteArray
+         -> EcScalar curve
+         -> EcdsaSignature curve
 signWith (SecretKey sk) content k =
-    let r = (ecX $ ecPointMul curveG (ecScalar k)) `mod` curveR -- we should assert that r /= 0. Won't happen...
-        s = bnMulMod (sh + (r * skBn)) (bnInverseMod k curveR) curveR
-    in  EcdsaSignature $ toBytesL (ecScalar r) % toBytesL (ecScalar s)
+    let r = (ecX $ ecPointGen k) `mod` curve_R -- we should assert that r /= 0. Won't happen...
+        s = bnMulMod (sh + (r * skBn)) (bnInverseMod k_bn curve_R) curve_R
+     in EcdsaSignature { ecdsa_r = ecScalar r, ecdsa_s = ecScalar s }
   where
-    sh = unsafeFromBytes . take ecFieldLength . toBytes $ hash
+    sh = unsafeFromBytes . padLeft 0 ecFieldLength . take ecFieldLength . toBytes $ hash
     hash = sha512Hash content
-    skBn = ecScalarBn $ sk
+    skBn = getEcScalarBn $ sk
+    k_bn = getEcScalarBn k
 
-verify
-    :: PublicKey
-    -> BackendByteArray
-    -> EcdsaSignature
-    -> Bool
-verify pk dat sig = verify' sha512Hash pk dat sig || verifyLegacy pk dat sig
+    curve   = getScalarCurve sk
+    curve_R = curveR curve
+    ecFieldLength = curveFieldLength curve
 
-{-# DEPRECATED verifyLegacy "Usage of SHA256 in signatures is deprecated. This function must be used only in legacy code." #-}
-verifyLegacy
-    :: PublicKey
-    -> BackendByteArray
-    -> EcdsaSignature
-    -> Bool
-verifyLegacy = verify' sha256Hash
-
-verify'
-    :: KnownNat v
-    => (BackendByteArray -> BackendByteArrayL v)
-    -> PublicKey
-    -> BackendByteArray
-    -> EcdsaSignature
-    -> Bool
-verify' hash (PublicKey pk) content sig =
-    r /= 0 && ss /= 0 && r < curveR && ss < curveR && r2 == r
+verify :: EcCurve curve
+       => PublicKey curve
+       -> BackendByteArray
+       -> EcdsaSignature curve
+       -> Bool
+verify qA content sig =
+    toBytes r2 `constEqBytes` toBytes (ecdsa_r sig)
   where
-    r2 = ecX $ ecPointMul2 curveG hG hA pk
-    hA = ecScalar $ bnMulMod r s curveR
-    hG = ecScalar $ bnMulMod sh s curveR
-    s = bnInverseMod ss curveR
-    ss = unsafeFromBytes . drop ecFieldLength . toBytes $ sig
-    r = unsafeFromBytes . take ecFieldLength . toBytes $ sig
-    sh = unsafeFromBytes . take ecFieldLength . toBytes $ hash content
+    r2 = ecXscalar $ ecPointMul2 curve_G u1 u2 (unPk qA)
+    u2 = ecdsa_r sig * w
+    u1 = z * w
+    w = ecScalarInverse (ecdsa_s sig)
+    z = either error id . fromBytes . padLeft 0 ecFieldLength . take ecFieldLength . toBytes $ sha512Hash content
 
+    ecFieldLength = curveFieldLength curve
+    curve_R       = curveR curve
+    curve_G       = curveG curve
+    curve         = getPointCurve (unPk qA)

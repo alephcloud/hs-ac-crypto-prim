@@ -16,11 +16,7 @@
 
 module PC.Crypto.Prim.Ecc.Key
 ( PublicKey(..)
-, PublicKeyLength
-, publicKeyLength
 , SecretKey(..)
-, SecretKeyLength
-, secretKeyLength
 
 , getPk
 , dhSecret
@@ -30,29 +26,18 @@ module PC.Crypto.Prim.Ecc.Key
 , generateKeyPair
 
 -- * Internal
-, EcScalarLength
-, ecScalarLength
-, EcPointLength
-, ecPointLength
 , ecScalarRandom
+, ecScalarRandomNonZero
 , ecRandomGenerator
 
-#ifdef __HASTE__
-, ecPointFromBinCompressedLAsync
-#endif
-, ecFieldToBytesL
-
--- * Binary parser
-, pPk
-, pSk
-, pScalar
-, pEcPoint
+, ecFieldToBytes
 
 -- ** Misc
 , bnSqrtModP
 
 ) where
 
+import qualified Data.ByteString as B
 import Control.Applicative hiding (empty)
 
 import Data.Monoid
@@ -61,6 +46,7 @@ import Control.Monad
 import Control.Monad.Error
 
 import Data.String
+import Data.Proxy
 import Data.Word
 
 import GHC.TypeLits
@@ -80,14 +66,23 @@ import PC.Bytes.Utils
 -- -------------------------------------------------------------------------- --
 -- * Random 'EcScalar'
 
-ecScalarRandom :: MonadIO u => u EcScalar
-ecScalarRandom = liftIO $ ecScalar <$> bnRandom curveR
+ecScalarRandom :: (EcCurve curve, MonadIO u) => u (EcScalar curve)
+ecScalarRandom = liftIO (getRandom Proxy)
+  where getRandom :: EcCurve curve => Proxy curve -> IO (EcScalar curve)
+        getRandom proxy = ecScalar <$> bnRandom (curveR $ curveFromProxy proxy)
+
+ecScalarRandomNonZero :: (EcCurve curve, MonadIO io) => io (EcScalar curve)
+ecScalarRandomNonZero = liftIO (getRandom Proxy)
+  where getRandom :: EcCurve curve => Proxy curve -> IO (EcScalar curve)
+        getRandom proxy = do
+            r <- bnRandom (curveR $ curveFromProxy proxy)
+            if r == 0 then getRandom proxy else return $ ecScalar r
 
 -- -------------------------------------------------------------------------- --
 -- * Generating a random generator for the curve group of order curveR
 
-ecRandomGenerator :: MonadIO u => u EcPoint
-ecRandomGenerator = liftIO $ ecPointMul curveG <$> ecScalarRandom
+ecRandomGenerator :: (EcCurve curve, MonadIO u) => u (EcPoint curve)
+ecRandomGenerator = liftIO $ ecPointGen <$> ecScalarRandom
 
 -- -------------------------------------------------------------------------- --
 -- * Ec Scalar Serialization
@@ -95,33 +90,32 @@ ecRandomGenerator = liftIO $ ecPointMul curveG <$> ecScalarRandom
 -- TODO Move this into a separate module
 --
 
-type EcScalarLength = CurveFieldLength
+instance EcCurve curve => Bytes (EcScalar curve) where
+    toBytes = ecScalarToBytes
+    fromBytes = ecScalarFromBytes
 
-ecScalarLength :: Int
-ecScalarLength = curveFieldLength
-
-instance BytesL EcScalar where
-    type ByteLengthL EcScalar = EcScalarLength
-    toBytesL = ecScalarToBytesL
-    fromBytesL = ecScalarFromBytesL
-
-instance Bytes EcScalar where
-    toBytes = padLeft 0 ecScalarLength . toBytes . ecScalarBn
-    fromBytes = fmap ecScalar . fromBytes
-
-instance Code16 Bn => Code16 EcScalar where
-    to16 = to16 . ecScalarBn
+instance (EcCurve curve, Code16 Bn) => Code16 (EcScalar curve) where
+    to16 = to16 . getEcScalarBn
     from16 = fmap ecScalar . from16
 
-instance Code64 Bn => Code64 EcScalar where
-    to64 = to64 . ecScalarBn
+instance (EcCurve curve, Code64 Bn) => Code64 (EcScalar curve) where
+    to64 = to64 . getEcScalarBn
     from64 = fmap ecScalar . from64
 
-ecScalarFromBytesL :: BackendByteArrayL EcScalarLength -> Either String EcScalar
-ecScalarFromBytesL = fmap ecScalar . fromBytes . toBytes
+ecScalarFromBytes :: EcCurve curve => BackendByteArray -> Either String (EcScalar curve)
+ecScalarFromBytes bs = from Proxy
+  where from :: EcCurve curve => Proxy curve -> Either String (EcScalar curve)
+        from proxy =
+            let len = curveFieldLength $ curveFromProxy proxy
+             in if B.length bs == len
+                    then ecScalar <$> fromBytes bs
+                    -- else Left "invalid length for scalar"
+                    else Left ("invalid length for scalar: got: " ++ show (B.length bs) ++ " expecting " ++ show len)
 
-ecScalarToBytesL :: EcScalar -> BackendByteArrayL EcScalarLength
-ecScalarToBytesL = unsafeFromBytes . padLeft 0 ecScalarLength . toBytes . ecScalarBn
+ecScalarToBytes :: EcCurve curve => EcScalar curve -> BackendByteArray
+ecScalarToBytes bn = padLeft 0 (getFieldLength Proxy bn) $ toBytes $ getEcScalarBn bn
+  where getFieldLength :: EcCurve curve => Proxy curve -> EcScalar curve -> Int
+        getFieldLength proxy _ = curveFieldLength $ curveFromProxy proxy
 
 -- -------------------------------------------------------------------------- --
 -- * Point Serialization
@@ -129,100 +123,33 @@ ecScalarToBytesL = unsafeFromBytes . padLeft 0 ecScalarLength . toBytes . ecScal
 -- TODO Move this into a separate module
 --
 
-ecPointLength :: Int
-ecPointLength = curveFieldLength + 1
+instance EcCurve curve => Bytes (EcPoint curve) where
+    toBytes = doTo Proxy
+      where doTo :: EcCurve curve => Proxy curve -> EcPoint curve -> BackendByteArray
+            doTo proxy p = curvePointToBin (curveFromProxy proxy) p
+    fromBytes bs = doFrom Proxy
+      where doFrom :: EcCurve curve => Proxy curve -> Either String (EcPoint curve)
+            doFrom proxy = curvePointFromBin (curveFromProxy proxy) bs
 
-type EcPointLength = CurveFieldLength + 1
-
-instance Bytes EcPoint where
-    toBytes = toBytes . ecPointToBinCompressedL
-    fromBytes = ecPointFromBinCompressedL <=< fromBytes
-
-instance BytesL EcPoint where
-    type ByteLengthL EcPoint = EcPointLength
-    toBytesL = ecPointToBinCompressedL
-    fromBytesL = ecPointFromBinCompressedL
-
-instance Code16 EcPoint where
+instance EcCurve curve => Code16 (EcPoint curve) where
     to16 = to16 . toBytes
     from16 = fromBytes <=< from16
 
-instance Code64 EcPoint where
+instance EcCurve curve => Code64 (EcPoint curve) where
     to64 = to64 . toBytes
     from64 = fromBytes <=< from64
 
-instance Show EcPoint where
+instance EcCurve curve => Show (EcPoint curve) where
     show = to16
 
-ecFieldFromBytesL :: BackendByteArrayL EcFieldLength -> Either String Bn
-ecFieldFromBytesL = fromBytes . toBytes
+ecFieldFromBytes :: EcCurve curve => curve -> BackendByteArray -> Either String Bn
+ecFieldFromBytes curve bs
+    | B.length bs == len = fromBytes bs
+    | otherwise          = Left "invalid size for ec field element"
+  where len = curveFieldLength curve
 
-ecFieldToBytesL :: Bn -> BackendByteArrayL EcFieldLength
-ecFieldToBytesL = unsafeFromBytes . padLeft 0 curveFieldLength . toBytes
-
--- | EcPoiint serialization
---
-ecPointToBinCompressedL :: EcPoint -> BackendByteArrayL EcPointLength
-ecPointToBinCompressedL p = prefix % (ecFieldToBytesL . ecX) p
-    where
-    prefix :: BackendByteArrayL 1
-    prefix = either error id . fromBytes . fromList $ if (ecY p `mod` 2) == 0 then [2 :: Word8] else [3 :: Word8]
-
--- This is not a general method but works only for the moduli of curve 192 and 521
---
-ecPointFromBinCompressedL :: BackendByteArrayL EcPointLength -> Either String EcPoint
-ecPointFromBinCompressedL x = do
-    let (c :: BackendByteArrayL 1, b) = splitL x
-    xBn <- ecFieldFromBytesL b
-    cBn <- fromBytes $ toBytes c
-    yBn <- affineY cBn xBn
-    return $ ecPoint xBn yBn
-
-#ifdef __HASTE__
-ecPointFromBinCompressedLAsync :: BackendByteArrayL EcPointLength -> (Either String EcPoint -> IO ()) -> IO ()
-ecPointFromBinCompressedLAsync x cont = do
-    let (c :: BackendByteArrayL N1, b) = splitL x
-    case (,) <$> ecFieldFromBytesL b <*> fromBytes (toBytes c) of
-        Right (xBn, cBn) ->
-            affineYAsync cBn xBn $ \yBn -> cont $ ecPoint xBn <$> yBn
-        Left e -> cont $ Left e
-#endif
-
--- This is not a general method but works for the moduli of the NIST curves p192, p384, p521
--- <http://www.nsa.gov/ia/_files/nist-routines.pdf>
--- and the Koblitz curve secp256k1 <http://www.secg.org/collateral/sec2_final.pdf>.
---
--- In concret this function assume that
---
--- > curveP `mod` 4 == 3
---
--- This condition is /not/ checked.
---
-affineY :: (Show Bn) => Bn -> Bn -> Either String Bn
-affineY c x = do
-    let t0 = (((bnPowerMod x 3 curveP) - (bnMulMod x 3 curveP)) + curveB) `mod` curveP
-    let t1 = bnSqrtModP t0 curveP
-    t2 <- if (bnPowerMod t1 2 curveP) == t0
-        then return t1
-        else Left $ "illegal point: " `mappend` show t1 `mappend` " ^2 = " `mappend` show (bnMulMod t1 t1 curveP)
-    return $ if (t2 `mod` 2) == (c `mod` 2)
-        then t2
-        else curveP - t2
-
-#ifdef __HASTE__
-affineYAsync :: (Show Bn) => Bn -> Bn -> (Either String Bn -> IO ()) -> IO ()
-affineYAsync c x cont = do
-    bnPowerModAsync x 3 curveP $ \t00 -> do
-        let t0 = ((t00 - (bnMulMod x 3 curveP)) + curveB) `mod` curveP
-        bnSqrtModPAsync t0 curveP $ \t1 -> do
-            bnPowerModAsync t1 2 curveP $ \t -> do
-                if t /= t0
-                    then cont . Left $ "illegal point: " `mappend` show t1 `mappend` " ^2 = " `mappend` show (bnMulMod t1 t1 curveP)
-                    else cont . Right $
-                        if (t1 `mod` 2) == (c `mod` 2)
-                            then t1
-                            else curveP - t1
-#endif
+ecFieldToBytes :: EcCurve curve => curve -> Bn -> BackendByteArray
+ecFieldToBytes curve = padLeft 0 (curveFieldLength curve) . toBytes
 
 -- | This is not a general method but works only for the moduli of curve 192 and 521:
 --
@@ -238,39 +165,27 @@ bnSqrtModP square prime = s
     s = bnPowerMod square expo prime
     expo = (bnHalve . bnHalve) $ (prime + 1)
 
-#ifdef __HASTE__
-bnSqrtModPAsync :: Bn -> Bn -> (Bn -> IO ()) -> IO ()
-bnSqrtModPAsync square prime cont = bnPowerModAsync square expo prime cont
-    where
-    expo = (bnHalve . bnHalve) $ (prime + 1)
-#endif
-
 -- -------------------------------------------------------------------------- --
 -- * Keys
 
-newtype SecretKey = SecretKey { unSk :: EcScalar }
+newtype SecretKey curve = SecretKey { unSk :: EcScalar curve }
     deriving (Show, Eq, Ord)
 
-deriving instance Code64 Bn => Code64 SecretKey
-deriving instance Code16 Bn => Code16 SecretKey
+deriving instance (EcCurve curve, Code64 Bn) => Code64 (SecretKey curve)
+deriving instance (EcCurve curve, Code16 Bn) => Code16 (SecretKey curve)
 
-instance Bytes SecretKey where
+instance EcCurve curve => Bytes (SecretKey curve) where
     toBytes = toBytes . unSk
     fromBytes = fmap SecretKey . fromBytes
 
-instance BytesL SecretKey where
-    type ByteLengthL SecretKey = SecretKeyLength
-    toBytesL (SecretKey n) = ecScalarToBytesL n
-    fromBytesL = fmap SecretKey . fromBytes . toBytes
-
-newtype PublicKey = PublicKey { unPk :: EcPoint }
+newtype PublicKey curve = PublicKey { unPk :: EcPoint curve }
     deriving (Show, Eq, Code64, Code16)
 
 -- | This instance of 'Ord' for 'PublicKey' does not
 -- represent any topological properties. It is meant
 -- primarily for data structures like binary search
 -- trees.
-instance Ord PublicKey where
+instance EcCurve curve => Ord (PublicKey curve) where
     compare (PublicKey a) (PublicKey b) = compare (ecX a, ecY a) (ecX b, ecY b)
 
 -- | We support two different encodings:
@@ -278,88 +193,63 @@ instance Ord PublicKey where
 -- 1. the normal compresssed encoding as generated by the 'ToJSON' instance
 --    of 'PublicKey'.
 --
--- 2. an uncomporessed encoding. The uncompressed encoding consists of the
+-- 2. an uncompressed encoding. The uncompressed encoding consists of the
 --    concatenation of the affine x and y conordinates byte serialization.
 --
 -- The length of the input determines which encoding is used.
 --
-instance Bytes PublicKey where
+instance EcCurve curve => Bytes (PublicKey curve) where
     toBytes = toBytes . unPk
-    fromBytes bytes = PublicKey <$>
+    fromBytes bytes = PublicKey <$> fromBytes bytes
+{-
         (fromBytes bytes <|>
             (ecPoint
                 <$> fromBytes (take ecScalarLength bytes)
                 <*> fromBytes (drop ecScalarLength bytes)))
+-}
 
--- | We support two different encodings:
---
--- 1. the normal compresssed encoding as generated by the 'ToJSON' instance
---    of 'PublicKey'.
---
--- 2. an uncomporessed encoding. The uncompressed encoding consists of the
---    concatenation of the affine x and y conordinates byte serialization.
---
--- The length of the input determines which encoding is used.
---
-instance BytesL PublicKey where
-    type ByteLengthL PublicKey = PublicKeyLength
-    toBytesL (PublicKey point) = toBytesL point
-    fromBytesL bytesL = PublicKey <$>
-        (fromBytesL bytesL <|>
-            (ecPoint
-                <$> ecFieldFromBytesL (takeL bytesL)
-                <*> ecFieldFromBytesL (takeEndL bytesL)))
-
-type PublicKeyLength = EcPointLength
-
-publicKeyLength :: Int
-publicKeyLength = ecPointLength
-
-type SecretKeyLength = EcScalarLength
-
-secretKeyLength :: Int
-secretKeyLength = curveFieldLength
-
-data KeyPair = KeyPair
-    { jEcKeyPairPk :: PublicKey
-    , jEcKeyPairSk :: SecretKey
+data KeyPair curve = KeyPair
+    { jEcKeyPairPk :: PublicKey curve
+    , jEcKeyPairSk :: SecretKey curve
     }
 
 -- | Create EC key pair
 --
-generateKeyPair :: MonadIO u => u KeyPair
+generateKeyPair :: EcCurve curve => MonadIO u => u (KeyPair curve)
 generateKeyPair = liftIO $ do
     secBn <- ecScalarRandom
-    let pkPoint =  ecPointMul curveG secBn
+    let pkPoint = ecPointGen secBn
     return $ KeyPair (PublicKey pkPoint) (SecretKey secBn)
 
 -- | Basic Diffie-Hellman
 --
-dh :: SecretKey -> PublicKey -> EcPoint
+dh :: EcCurve curve => SecretKey curve -> PublicKey curve -> EcPoint curve
 dh (SecretKey sec) (PublicKey pub) = ecPointMul pub sec
 
 -- | Basic Diffie-Hellman
 --
 -- Returns the affine x-coordinate of the resulting point
 --
-dhSecret :: SecretKey -> PublicKey -> EcScalar
+dhSecret :: EcCurve curve => SecretKey curve -> PublicKey curve -> EcScalar curve
 dhSecret sk pk = ecScalar . ecX $ dh sk pk
 
-getPk :: SecretKey -> PublicKey
-getPk sec = PublicKey $ dh sec (PublicKey curveG)
+getPk :: EcCurve curve => SecretKey curve -> PublicKey curve
+getPk (SecretKey sec) = PublicKey $ ecPointGen sec
 
 -- -------------------------------------------------------------------------- --
 -- Parser
 
-pPk :: (BytesL PublicKey) => Parser PublicKey
-pPk = pTakeBytesL <?> "pPk"
+{-
+pPk :: (EcCurve curve, Bytes (PublicKey curve)) => Parser (PublicKey curve)
+pPk = pTakeBytes <?> "pPk"
 
-pSk :: (BytesL SecretKey) => Parser SecretKey
+pSk :: (EcCurve curve, Bytes (SecretKey curve)) => Parser (SecretKey curve)
 pSk = pTakeBytesL <?> "pSk"
 
-pScalar :: (BytesL EcScalar) => Parser EcScalar
+pScalar :: (EcCurve curve, Bytes (EcScalar curve)) => Parser (EcScalar curve)
 pScalar = pTakeBytesL <?> "pScalar"
 
-pEcPoint :: (BytesL EcPoint) => Parser EcPoint
+pEcPoint :: (EcCurve curve, Bytes (EcPoint curve)) => Parser (EcPoint curve)
 pEcPoint = pTakeBytesL <?> "pEcPoint"
 
+-}

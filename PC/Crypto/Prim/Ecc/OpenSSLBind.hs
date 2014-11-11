@@ -42,7 +42,7 @@ module PC.Crypto.Prim.Ecc.OpenSSLBind
     , pointToAffineGFp
     , pointFromAffineGF2m
     , pointToAffineGF2m
-    -- * key 
+    -- * key
     , keyGenerateNew
     , keyFromPair
     , keyToPair
