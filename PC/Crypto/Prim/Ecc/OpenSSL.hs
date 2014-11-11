@@ -10,10 +10,8 @@ module PC.Crypto.Prim.Ecc.OpenSSL
   EcCurve(..)
 , P521
 , p521
-, curveG
-, curveR
-, curveP
-, curveB
+, P256
+, p256
 
 -- * EcPoint
 , EcPoint
@@ -62,13 +60,15 @@ class EcCurve curve where
 instance EcCurve curve => Eq (EcPoint curve) where
     ecp@(EcPoint a) == (EcPoint b) = pointEq (getPointGroup ecp) a b
 
+getGroup name oid =
+       maybe (error $ "cannot get openssl curve " ++ name) id
+     $ groupFromCurveName
+     $ maybe (error $ "cannot convert text to nid " ++ name) id
+     $ txt2Nid oid
+
 newtype P521 = P521 Group
 
-p521 = P521
-     $ maybe (error "cannot get openssl curve p521") id
-     $ groupFromCurveName
-     $ maybe (error "cannot convert text to nid") id
-     $ txt2Nid "1.3.132.0.35"
+p521 = P521 $ getGroup "p521" "1.3.132.0.35"
 
 instance EcCurve P521 where
     curveFromProxy _ = p521
@@ -82,6 +82,24 @@ instance EcCurve P521 where
     curveFieldLength (P521 _) = 66
     curvePointToBin (P521 g) (EcPoint point) = pointToOct g point PointConversion_Compressed
     curvePointFromBin (P521 g) bs = Right $ EcPoint $ octToPoint g bs
+
+newtype P256 = P256 Group
+
+p256 = P256 $ getGroup "p256" "1.2.840.10045.3.1.7"
+
+instance EcCurve P256 where
+    curveFromProxy _ = p256
+    curveGroup (P256 group) = group
+    curveP (P256 g) = let (p,_,_) = groupGetCurveGFp g in p
+    curveA (P256 g) = let (_,a,_) = groupGetCurveGFp g in a
+    curveB (P256 g) = let (_,_,b) = groupGetCurveGFp g in b
+    curveG (P256 g) = EcPoint $ groupGetGenerator g
+    curveR (P256 g) = groupGetOrder g
+
+    curveFieldLength (P256 _) = 32
+    curvePointToBin (P256 g) (EcPoint point) = pointToOct g point PointConversion_Compressed
+    curvePointFromBin (P256 g) bs = Right $ EcPoint $ octToPoint g bs
+
 
 getScalarGroup :: EcCurve curve => EcScalar curve -> EcGroup
 getScalarGroup = curveGroup . getScalarCurve
