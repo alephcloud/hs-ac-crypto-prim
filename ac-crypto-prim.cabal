@@ -53,7 +53,7 @@ Flag ecc_openssl
 
 Flag windows_openssl
     description: use openssl on windows
-    default: False
+    default: True
     manual: True
 
 Library
