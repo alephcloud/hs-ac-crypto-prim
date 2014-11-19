@@ -1,19 +1,27 @@
--- ------------------------------------------------------ --
--- Copyright © 2012 AlephCloud Systems, Inc.
--- ------------------------------------------------------ --
-
 Name:                ac-crypto-prim
 Version:             0.2.1
-Synopsis:            Alephcloud Crypto Library
+Synopsis:            Pivotcloud Cryptographic Primitives Library
 description:
-    Twc Crypto Library
+    Cryptographic Primitives:
+    .
+    * Elliptic curve operations: NIST, ED25519, Curve25519
+    .
+    * Signatures: ECDSA, EDDSA
+    .
+    * Symmetric encryption: AES, ChaCha, Salsa
+    .
+    * MAC: HMAC, Poly1305
+    .
+    * Hash: SHA2 family
+    .
+    * KDF: PBKDF2
 Homepage:            https://github.com/alephcloud/hs-ac-crypto-prim
 License:             AllRightsReserved
 License-file:        LICENSE
-Author:              Lars Kuhtz <lars@alephcloud.com>
-Maintainer:          lars@alephcloud.com
-Copyright:           Copyright (c) 2013, 2014 AlephCloud, Inc.
-Category:            Cryptography, AlephCloud
+Author:              PivotCloud
+Maintainer:          vhanquez@pivotmail.com
+Copyright:           Copyright (c) 2014 Pivotcloud
+Category:            Cryptography
 Build-type:          Simple
 cabal-version: >=1.10
 
