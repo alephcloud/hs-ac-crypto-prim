@@ -2,14 +2,17 @@
 -- Copyright (C) 2014 AlephCloud Systems, Inc.
 -- ------------------------------------------------------ --
 
-{-# LANGUAGE CPP #-}
 module PC.Crypto.Prim.Pbkdf2
-#if defined(NATIVE)
-( module PC.Crypto.Prim.Pbkdf2.Native ) where import PC.Crypto.Prim.Pbkdf2.Native
-#elif defined(OPENSSL)
-( module PC.Crypto.Prim.Pbkdf2.OpenSSL ) where import PC.Crypto.Prim.Pbkdf2.OpenSSL
-#elif defined(SJCL)
-( module PC.Crypto.Prim.Pbkdf2.Sjcl ) where import PC.Crypto.Prim.Pbkdf2.Sjcl
-#else
-#error "undefined backend"
-#endif
+    ( pbkdf2Sha512
+    ) where
+
+import Crypto.KDF.PBKDF2
+import Crypto.Hash (SHA512(..))
+import Data.ByteString (ByteString)
+
+pbkdf2Sha512 :: ByteString -- ^ password
+             -> ByteString -- ^ salt
+             -> Int        -- ^ number of rounds
+             -> Int        -- ^ size of result in bytes
+             -> ByteString
+pbkdf2Sha512 password salt iter outLen = generate (prfHMAC SHA512) $ Parameters password salt iter outLen

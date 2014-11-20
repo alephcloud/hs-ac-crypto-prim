@@ -92,7 +92,6 @@ Library
         text,
         securemem,
         cryptohash >= 0.11.5,
-        pbkdf >= 1.1.0.1,
         cipher-aes >= 0.2.5,
         base64-bytestring >= 1.0.0.1,
         base16-bytestring >= 0.1.1.5,
@@ -112,7 +111,6 @@ Library
                      , PC.Crypto.Prim.Aes.Native
                      , PC.Crypto.Prim.Sha.Native
                      , PC.Crypto.Prim.Hmac.Native
-                     , PC.Crypto.Prim.Pbkdf2.Native
     if flag(openssl) && ((os(mingw32) && flag(windows_openssl)) || !os(mingw32))
         -- link with the C library if openssl is enabled
         if os(mingw32)
@@ -145,6 +143,7 @@ Library
     other-modules:     Crypto.Cipher.Salsa
                      , Crypto.Cipher.ChaCha
                      , Crypto.MAC.Poly1305
+                     , Crypto.KDF.PBKDF2
     C-sources:         cbits/cryptonite_chacha.c
                      , cbits/cryptonite_salsa.c
                      , cbits/cryptonite_poly1305.c

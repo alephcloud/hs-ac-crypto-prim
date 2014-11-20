@@ -13,9 +13,6 @@ module PC.Crypto.Prim.Native
 -- * HMAC
 , module PC.Crypto.Prim.Hmac.Native
 
--- * PBKDF2
-, module PC.Crypto.Prim.Pbkdf2.Native
-
 -- * AES
 , module PC.Crypto.Prim.Aes.Native
 
@@ -23,7 +20,6 @@ module PC.Crypto.Prim.Native
 
 import PC.Crypto.Prim.Bn.Native
 import PC.Crypto.Prim.Hmac.Native
-import PC.Crypto.Prim.Pbkdf2.Native
 import PC.Crypto.Prim.Sha.Native
 import PC.Crypto.Prim.Aes.Native
 
