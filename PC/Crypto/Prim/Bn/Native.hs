@@ -1,17 +1,15 @@
--- ------------------------------------------------------ --
--- Copyright (C) 2013, 2014 AlephCloud Systems, Inc.
--- ------------------------------------------------------ --
-
+-- Copyright (c) 2013-2014 PivotCloud, Inc. All Rights Reserved.
+--
+-- NOTICE: The dissemination, reproduction, or copying of this file and the
+-- information contained herein, in any medium, is strictly forbidden.
+--
+-- The intellectual property and technical concepts contained herein are
+-- proprietary to PivotCloud and are protected by U.S. and Foreign law.
+--
 {-# LANGUAGE FlexibleInstances #-}
 {-# LANGUAGE TypeSynonymInstances #-}
 {-# LANGUAGE TypeFamilies #-}
 {-# OPTIONS_GHC -fno-warn-orphans #-}
-
--- | Bn based on Haskell 'Integer's
---
--- * FIXME use a newtype wrapper for restricting Bn to
---   positive Integers
---
 module PC.Crypto.Prim.Bn.Native
 (
 -- * Big Numbers

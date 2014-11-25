@@ -1,7 +1,11 @@
--- ------------------------------------------------------ --
--- Copyright (C) 2013, 2014 AlephCloud Systems, Inc.
--- ------------------------------------------------------ --
-
+-- Copyright (c) 2013-2014 PivotCloud, Inc. All Rights Reserved.
+--
+-- NOTICE: The dissemination, reproduction, or copying of this file and the
+-- information contained herein, in any medium, is strictly forbidden.
+--
+-- The intellectual property and technical concepts contained herein are
+-- proprietary to PivotCloud and are protected by U.S. and Foreign law.
+--
 {-# LANGUAGE CPP #-}
 {-# LANGUAGE FlexibleInstances #-}
 {-# LANGUAGE TypeSynonymInstances #-}
@@ -10,24 +14,6 @@
 {-# LANGUAGE RecordWildCards #-}
 {-# LANGUAGE FlexibleContexts #-}
 {-# LANGUAGE DataKinds #-}
-
--- | An implementation of basic EC primitives for EC cryptography.
---
--- This implementation does only depend on an Bn implementation.
---
--- Serialization is provided in a different module for two reasons:
---
--- 1. A dependency on 'ByteArray' is avoided and
---
--- 2. A alternate EC implementations may provide optimized versions of
---    the primitives in the module but yet to use the more high-level
---    EC algorithms that are used for serialization and exported in
---    that other module.
---
--- Currently the serialization code and the associated algorithms are
--- located in "PC.Crypto.Prim". They will be moved into a separate module
--- soon.
---
 module PC.Crypto.Prim.Ecc.Native
 (
 -- * Elliptic Curve Mathemtics
