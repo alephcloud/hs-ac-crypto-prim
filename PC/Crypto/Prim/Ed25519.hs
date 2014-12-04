@@ -10,6 +10,7 @@
 module PC.Crypto.Prim.Ed25519
     ( Ed25519.SecretKey
     , Ed25519.PublicKey
+    , Ed25519.Signature
     -- * key generation
     , createKeypair
     , createSecret
@@ -32,8 +33,8 @@ createSecret = snd `fmap` createKeypair
 createPublic :: Ed25519.SecretKey -> Ed25519.PublicKey
 createPublic = Ed25519.toPublicKey
 
-sign :: Ed25519.SecretKey -> ByteString -> ByteString
-sign = Ed25519.sign
+sign :: Ed25519.SecretKey -> ByteString -> Ed25519.Signature
+sign = Ed25519.sign'
 
-verify :: Ed25519.PublicKey -> ByteString -> Bool
-verify = Ed25519.verify
+verify :: Ed25519.PublicKey -> ByteString -> Ed25519.Signature -> Bool
+verify = Ed25519.verify'

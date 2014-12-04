@@ -42,6 +42,7 @@ import           Data.ByteString          as S
 import           Data.ByteString.Internal as SI
 import           Data.ByteString.Unsafe   as SU
 import           Data.Word
+import           PC.Bytes.ByteArray
 
 --------------------------------------------------------------------------------
 
@@ -50,9 +51,21 @@ import           Data.Word
 newtype SecretKey = SecretKey { unSecretKey :: ByteString }
         deriving (Eq, Show, Ord)
 
+instance Bytes SecretKey where
+    fromBytes bs
+        | S.length bs == 32 = Right $ SecretKey bs
+        | otherwise         = Left "ed25519 secretkey invalid size"
+    toBytes (SecretKey bs)  = bs
+
 -- | A 'PublicKey' created by 'createKeypair'.
 newtype PublicKey = PublicKey { unPublicKey :: ByteString }
         deriving (Eq, Show, Ord)
+
+instance Bytes PublicKey where
+    fromBytes bs
+        | S.length bs == 32 = Right $ PublicKey bs
+        | otherwise         = Left "ed25519 publickey invalid size"
+    toBytes (PublicKey bs)  = bs
 
 -- | Randomly generate a public and private key for doing
 -- authenticated signing and verification.
@@ -117,6 +130,13 @@ toPublicKey (SecretKey sk) =
 -- | A 'Signature' which is detached from the message it signed.
 newtype Signature = Signature { unSignature :: ByteString }
         deriving (Eq, Show, Ord)
+
+instance Bytes Signature where
+    fromBytes bs
+        | S.length bs == 64 = Right $ Signature bs
+        | otherwise         = Left "ed25519 signature invalid size"
+    toBytes (Signature bs)  = bs
+
 
 -- | Sign a message with a particular 'SecretKey', only returning the
 -- signature without the message.
