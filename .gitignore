@@ -1,4 +1,6 @@
 cabal.sandbox.config
 dist
 .*.swp
+*.o
+*.hi
 .hdevtools.sock
