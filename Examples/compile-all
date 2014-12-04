@@ -4,7 +4,7 @@ GHC_VER=`ghc --numeric-version`
 ARCH=`uname -m`
 UNAME_SYSTEM=`uname -s`
 if [ "$UNAME_SYSTEM" == "Darwin" ]; then
-       SYSTEM="osx" 
+       SYSTEM="osx"
 else
        SYSTEM="linux"
 fi
@@ -19,10 +19,12 @@ if [ $# -eq 1 ]; then
             exit 1
     fi
     PACKAGE_DB="-package-db=${SANDBOX}/${PACKAGE_DIR}"
+    PACKAGE_DB2="--package-db=${SANDBOX}/${PACKAGE_DIR}"
 else
-    PACKAGE_DB=""    
+    PACKAGE_DB=""
+    PACKAGE_DB2=""
 fi
-GHC_PKG="ghc-pkg -$PACKAGE_DB"
+GHC_PKG="ghc-pkg -$PACKAGE_DB2"
 GHC="ghc $PACKAGE_DB"
 
 ${GHC_PKG} describe ac-crypto-prim > /dev/null
