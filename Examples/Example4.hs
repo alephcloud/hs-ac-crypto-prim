@@ -18,7 +18,7 @@ import Control.Applicative
 
 type SecurityParameter = 32
 
-newtype Secret = Secret (ByteArrayL B.ByteString SecurityParameter)
+newtype Secret = Secret (ByteArrayL SecurityParameter)
 
 -- Note: not currently used
 genRandSecret :: IO Secret
