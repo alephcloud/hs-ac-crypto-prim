@@ -1,0 +1,39 @@
+#!/bin/sh
+
+GHC_VER=`ghc --numeric-version`
+ARCH=`uname -m`
+UNAME_SYSTEM=`uname -s`
+if [ "$UNAME_SYSTEM" == "Darwin" ]; then
+       SYSTEM="osx" 
+else
+       SYSTEM="linux"
+fi
+
+SANDBOX=""
+if [ $# -eq 1 ]; then
+    SANDBOX=$1
+
+    PACKAGE_DIR="${ARCH}-${SYSTEM}-ghc-${GHC_VER}-packages.conf.d"
+    if [ ! -d "$SANDBOX/$PACKAGE_DIR" ]; then
+            echo "cannot find sandbox at ${SANDBOX}"
+            exit 1
+    fi
+    PACKAGE_DB="-package-db=${SANDBOX}/${PACKAGE_DIR}"
+else
+    PACKAGE_DB=""    
+fi
+GHC_PKG="ghc-pkg -$PACKAGE_DB"
+GHC="ghc $PACKAGE_DB"
+
+${GHC_PKG} describe ac-crypto-prim > /dev/null
+if [ $? -ne 0 ]; then
+        echo "error: package ac-crypto-prim not found in user-database"
+        echo ""
+        echo "alternatively you can point to a sandbox that contains it with $0 <path-to-sandbox>"
+        exit 2
+fi
+
+for i in *.hs
+do
+    ${GHC} -fforce-recomp $i
+done
