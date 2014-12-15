@@ -15,5 +15,6 @@ int ed25519_sign(unsigned char *sm,unsigned long long *smlen,
 int ed25519_sign_open(unsigned char *m,unsigned long long *mlen,
                       const unsigned char *sm,unsigned long long smlen,
                       const unsigned char *pk);
+int ed25519_sync_public(unsigned char *sk);
 
 #endif /* _ED25519_H_ */

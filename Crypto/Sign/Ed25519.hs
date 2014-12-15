@@ -53,9 +53,13 @@ newtype SecretKey = SecretKey { unSecretKey :: ByteString }
 
 instance Bytes SecretKey where
     fromBytes bs
-        | S.length bs == 32 = Right $ SecretKey bs
+        | S.length bs == 32 = Right $ SecretKey $ SI.unsafeCreate 64 $ \ptr -> do
+            let (SI.PS fptr ofs _) = bs
+            withForeignPtr fptr $ \src -> SI.memcpy ptr (src `plusPtr` ofs) 32
+            _ <- c_crypto_sync_public ptr
+            return ()
         | otherwise         = Left "ed25519 secretkey invalid size"
-    toBytes (SecretKey bs)  = bs
+    toBytes (SecretKey bs)  = S.take 32 bs
 
 -- | A 'PublicKey' created by 'createKeypair'.
 newtype PublicKey = PublicKey { unPublicKey :: ByteString }
@@ -176,6 +180,9 @@ cryptoSignPUBLICKEYBYTES = 32
 
 cryptoSignBYTES :: Int
 cryptoSignBYTES = 64
+
+foreign import ccall unsafe "ed25519_sync_public"
+  c_crypto_sync_public :: Ptr Word8 -> IO CInt
 
 foreign import ccall unsafe "ed25519_sign_keypair"
   c_crypto_sign_keypair :: Ptr Word8 -> Ptr Word8 -> IO CInt
