@@ -59,11 +59,6 @@ Flag ecc_openssl
     default: True
     manual: True
 
-Flag windows_openssl
-    description: use openssl on windows
-    default: True
-    manual: True
-
 Library
     exposed-modules:
         PC.Crypto.Prim.Bn
@@ -111,10 +106,13 @@ Library
                      , PC.Crypto.Prim.Aes.Native
                      , PC.Crypto.Prim.Sha.Native
                      , PC.Crypto.Prim.Hmac.Native
-    if flag(openssl) && ((os(mingw32) && flag(windows_openssl)) || !os(mingw32))
+
+    if flag(openssl)
         -- link with the C library if openssl is enabled
-        if os(mingw32)
+        if os(mingw32) || os(windows)
             extra-libraries: eay32, ssl32, wsock32
+            extra-lib-dirs: C:\OpenSSL-Win64\bin
+                            C:\OpenSSL-Win64
             CC-Options:      -D MINGW32
         else
             extra-libraries: crypto, ssl
