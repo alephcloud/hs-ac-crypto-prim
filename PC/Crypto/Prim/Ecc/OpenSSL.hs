@@ -40,6 +40,7 @@ module PC.Crypto.Prim.Ecc.OpenSSL
 , getPointCurve
 ) where
 
+import Control.Applicative
 import Data.Proxy
 import PC.Bytes.ByteArray
 import PC.Crypto.Prim.Ecc.OpenSSLBind
@@ -85,7 +86,7 @@ instance EcCurve P521 where
 
     curveFieldLength (P521 _) = 66
     curvePointToBin (P521 g) (EcPoint point) = pointToOct g point PointConversion_Compressed
-    curvePointFromBin (P521 g) bs = Right $ EcPoint $ octToPoint g bs
+    curvePointFromBin (P521 g) bs = EcPoint <$> octToPoint g bs
 
 newtype P256 = P256 Group
 
@@ -102,7 +103,7 @@ instance EcCurve P256 where
 
     curveFieldLength (P256 _) = 32
     curvePointToBin (P256 g) (EcPoint point) = pointToOct g point PointConversion_Compressed
-    curvePointFromBin (P256 g) bs = Right $ EcPoint $ octToPoint g bs
+    curvePointFromBin (P256 g) bs = EcPoint <$> octToPoint g bs
 
 
 getScalarGroup :: EcCurve curve => EcScalar curve -> EcGroup

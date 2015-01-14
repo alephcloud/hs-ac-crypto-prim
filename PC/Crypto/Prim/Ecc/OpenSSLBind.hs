@@ -361,6 +361,13 @@ withPointNew grp f = do
     f ptr
     Point <$> newForeignPtr _point_free_funptr ptr
 
+withPointNewWithReturn :: Ptr EC_GROUP -> (Ptr EC_POINT -> IO r) -> IO (r, Point)
+withPointNewWithReturn grp f = do
+    ptr   <- _point_new grp
+    r     <- f ptr
+    point <- Point <$> newForeignPtr _point_free_funptr ptr
+    return (r, point)
+
 withPointDup :: Ptr EC_GROUP -> Ptr EC_POINT -> (Ptr EC_POINT -> IO ()) -> IO Point
 withPointDup grp p f = do
     ptr <- _point_dup p grp
@@ -596,14 +603,15 @@ pointToOct (Group g) (Point p) pconv = doIO $
   where form = pointConversionToC pconv
 {-# NOINLINE pointToOct #-}
 
-octToPoint :: Group -> ByteString -> Point
-octToPoint (Group g) bs = doIO $
-    withForeignPtr g    $ \gptr ->
-    withForeignPtr fptr $ \bsPtr ->
-    withBnCtxNew        $ \bnCtx ->
-    withPointNew gptr   $ \r ->
-        let buf = castPtr (bsPtr `plusPtr` o)
-         in check $ _point_oct2 gptr r buf (fromIntegral len) bnCtx
+octToPoint :: Group -> ByteString -> Either String Point
+octToPoint (Group g) bs = doIO $ do
+    (opensslRet,point) <- withForeignPtr g            $ \gptr ->
+                          withForeignPtr fptr         $ \bsPtr ->
+                          withBnCtxNew                $ \bnCtx ->
+                          withPointNewWithReturn gptr $ \r ->
+                                let buf = castPtr (bsPtr `plusPtr` o)
+                                 in _point_oct2 gptr r buf (fromIntegral len) bnCtx
+    if opensslRet == 1 then return (Right point) else return (Left "invalid point")
   where (fptr, o, len) = B.toForeignPtr bs
 {-# NOINLINE octToPoint #-}
 
