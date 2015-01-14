@@ -1,4 +1,5 @@
 {-# LANGUAGE ForeignFunctionInterface #-}
+{-# LANGUAGE GeneralizedNewtypeDeriving #-}
 -- |
 -- Module      : Crypto.Sign.Ed25519
 -- Copyright   : (c) Austin Seipp 2013
@@ -44,12 +45,14 @@ import           Data.ByteString.Unsafe   as SU
 import           Data.Word
 import           PC.Bytes.ByteArray
 
+import           Control.DeepSeq (NFData)
+
 --------------------------------------------------------------------------------
 
 -- | A 'SecretKey' created by 'createKeypair'. Be sure to keep this
 -- safe!
 newtype SecretKey = SecretKey { unSecretKey :: ByteString }
-        deriving (Eq, Show, Ord)
+        deriving (Eq, Show, Ord, NFData)
 
 instance Bytes SecretKey where
     fromBytes bs
@@ -63,7 +66,7 @@ instance Bytes SecretKey where
 
 -- | A 'PublicKey' created by 'createKeypair'.
 newtype PublicKey = PublicKey { unPublicKey :: ByteString }
-        deriving (Eq, Show, Ord)
+        deriving (Eq, Show, Ord, NFData)
 
 instance Bytes PublicKey where
     fromBytes bs
@@ -133,7 +136,7 @@ toPublicKey (SecretKey sk) =
 
 -- | A 'Signature' which is detached from the message it signed.
 newtype Signature = Signature { unSignature :: ByteString }
-        deriving (Eq, Show, Ord)
+        deriving (Eq, Show, Ord, NFData)
 
 instance Bytes Signature where
     fromBytes bs

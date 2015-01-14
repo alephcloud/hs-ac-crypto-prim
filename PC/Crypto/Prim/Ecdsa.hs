@@ -6,6 +6,7 @@
 -- The intellectual property and technical concepts contained herein are
 -- proprietary to PivotCloud and are protected by U.S. and Foreign law.
 --
+{-# LANGUAGE DeriveGeneric #-}
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE ScopedTypeVariables #-}
 {-# LANGUAGE RecordWildCards #-}
@@ -23,6 +24,7 @@ module PC.Crypto.Prim.Ecdsa
 ) where
 
 import Control.Applicative
+import Control.DeepSeq (NFData)
 import Control.Monad.IO.Class
 
 import Data.Byteable (constEqBytes)
@@ -30,6 +32,7 @@ import Data.Monoid
 import Data.Proxy
 import qualified Data.ByteString as B (length, splitAt)
 
+import GHC.Generics
 import GHC.TypeLits
 
 import Prelude hiding (take, drop)
@@ -48,7 +51,9 @@ import PC.Crypto.Prim.Ecc
 data EcdsaSignature curve = EcdsaSignature
     { ecdsa_r :: !(EcScalar curve)
     , ecdsa_s :: !(EcScalar curve)
-    } deriving (Show)
+    } deriving (Show,Generic)
+
+instance NFData (EcdsaSignature curve)
 
 instance EcCurve curve => Eq (EcdsaSignature curve) where
     (EcdsaSignature r1 s1) == (EcdsaSignature r2 s2) = (toInt rEq + toInt sEq) == 2
