@@ -8,6 +8,7 @@
 --
 {-# LANGUAGE ForeignFunctionInterface #-}
 {-# LANGUAGE EmptyDataDecls #-}
+{-# LANGUAGE DeriveDataTypeable #-}
 module PC.Crypto.Prim.Ecc.OpenSSLBind
     ( Point
     , Group
@@ -50,6 +51,8 @@ module PC.Crypto.Prim.Ecc.OpenSSLBind
     , keyGenerateNew
     , keyFromPair
     , keyToPair
+    -- * async error handling
+    , OpenSSLError(..)
     ) where
 
 -- #include "openssl/ec.h"
@@ -57,6 +60,7 @@ module PC.Crypto.Prim.Ecc.OpenSSLBind
 
 import Control.Monad (void)
 import Control.Applicative
+import Control.Exception (Exception, throw)
 import Foreign.ForeignPtr
 import Foreign.Ptr
 import Foreign.C.Types
@@ -65,6 +69,7 @@ import Data.ByteString (ByteString)
 import Data.Bits
 import qualified Data.ByteString as B
 import qualified Data.ByteString.Internal as B
+import Data.Typeable
 import System.IO.Unsafe (unsafePerformIO)
 
 -- | An ellitic curve group
@@ -327,11 +332,16 @@ foreign import ccall unsafe "EC_KEY_set_private_key"
 foreign import ccall unsafe "EC_KEY_set_public_key"
     _key_set_public_key :: Ptr EC_KEY -> Ptr EC_POINT -> IO CInt
 
+data OpenSSLError = OpenSSLError Int
+    deriving (Show,Read,Eq,Typeable)
+
+instance Exception OpenSSLError
+
 check :: IO CInt -> IO ()
 check f = do
     r <- f
     if r == 0
-        then error ("check failed returned: " ++ show r)
+        then throw $ OpenSSLError (fromIntegral r)
         else return ()
 
 withBnCtxNew :: (Ptr BN_CTX -> IO a) -> IO a
