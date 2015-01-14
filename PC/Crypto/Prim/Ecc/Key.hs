@@ -8,7 +8,6 @@
 --
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE ScopedTypeVariables #-}
-{-# LANGUAGE RecordWildCards #-}
 {-# LANGUAGE CPP #-}
 {-# LANGUAGE TypeOperators #-}
 {-# LANGUAGE StandaloneDeriving #-}
@@ -45,6 +44,7 @@ import Control.Applicative hiding (empty)
 
 import Data.Monoid
 
+import Control.DeepSeq (NFData)
 import Control.Monad
 import Control.Monad.Error
 
@@ -172,7 +172,7 @@ bnSqrtModP square prime = s
 -- * Keys
 
 newtype SecretKey curve = SecretKey { unSk :: EcScalar curve }
-    deriving (Show, Eq, Ord)
+    deriving (Show, Eq, Ord, NFData)
 
 deriving instance (EcCurve curve, Code64 Bn) => Code64 (SecretKey curve)
 deriving instance (EcCurve curve, Code16 Bn) => Code16 (SecretKey curve)
@@ -182,7 +182,7 @@ instance EcCurve curve => Bytes (SecretKey curve) where
     fromBytes = fmap SecretKey . fromBytes
 
 newtype PublicKey curve = PublicKey { unPk :: EcPoint curve }
-    deriving (Show, Eq, Code64, Code16)
+    deriving (Show, Eq, Code64, Code16, NFData)
 
 -- | This instance of 'Ord' for 'PublicKey' does not
 -- represent any topological properties. It is meant

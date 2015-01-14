@@ -61,6 +61,7 @@ module PC.Crypto.Prim.Ecc.OpenSSLBind
 import Control.Monad (void)
 import Control.Applicative
 import Control.Exception (Exception, throw)
+import Control.DeepSeq (NFData(..))
 import Foreign.ForeignPtr
 import Foreign.Ptr
 import Foreign.C.Types
@@ -75,11 +76,17 @@ import System.IO.Unsafe (unsafePerformIO)
 -- | An ellitic curve group
 newtype Group = Group (ForeignPtr EC_GROUP)
 
+instance NFData Group where rnf (Group p) = p `seq` ()
+
 -- | An elliptic curve point
 newtype Point = Point (ForeignPtr EC_POINT)
 
+instance NFData Point where rnf (Point p) = p `seq` ()
+
 -- | An elliptic curve key
 newtype Key = Key (ForeignPtr EC_KEY)
+
+instance NFData Key where rnf (Key p) = p `seq` ()
 
 -- | openssl ASN1 NID
 type Nid = Int
