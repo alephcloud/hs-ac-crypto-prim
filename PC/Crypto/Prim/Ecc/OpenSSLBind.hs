@@ -60,7 +60,7 @@ module PC.Crypto.Prim.Ecc.OpenSSLBind
 
 import Control.Monad (void)
 import Control.Applicative
-import Control.Exception (Exception, throw)
+import Control.Exception (Exception, throwIO)
 import Foreign.ForeignPtr
 import Foreign.Ptr
 import Foreign.C.Types
@@ -341,7 +341,7 @@ check :: IO CInt -> IO ()
 check f = do
     r <- f
     if r == 0
-        then throw $ OpenSSLError (fromIntegral r)
+        then throwIO $ OpenSSLError (fromIntegral r)
         else return ()
 
 withBnCtxNew :: (Ptr BN_CTX -> IO a) -> IO a
