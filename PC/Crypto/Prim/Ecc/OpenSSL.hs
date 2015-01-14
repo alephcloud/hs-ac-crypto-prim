@@ -41,12 +41,14 @@ module PC.Crypto.Prim.Ecc.OpenSSL
 ) where
 
 import Control.Applicative
+import Control.DeepSeq (NFData)
 import Data.Proxy
 import PC.Bytes.ByteArray
 import PC.Crypto.Prim.Ecc.OpenSSLBind
 import PC.Crypto.Prim.Bn
 
 newtype EcPoint curve = EcPoint Point
+    deriving (NFData)
 
 type EcGroup = Group
 
@@ -72,6 +74,7 @@ getGroup name oid =
      $ txt2Nid oid
 
 newtype P521 = P521 Group
+    deriving (NFData)
 
 p521 = P521 $ getGroup "p521" "1.3.132.0.35"
 
@@ -89,6 +92,7 @@ instance EcCurve P521 where
     curvePointFromBin (P521 g) bs = EcPoint <$> octToPoint g bs
 
 newtype P256 = P256 Group
+    deriving (NFData)
 
 p256 = P256 $ getGroup "p256" "1.2.840.10045.3.1.7"
 
@@ -123,7 +127,7 @@ getPointCurve = getCurve Proxy
         getCurve proxy _ = curveFromProxy proxy
 
 newtype EcScalar curve = EcScalar { getEcScalarBn :: Bn }
-    deriving (Eq, Ord, Show, Integral, Real, Enum)
+    deriving (Eq, Ord, Show, Integral, Real, Enum, NFData)
 
 ecScalar :: EcCurve curve => Bn -> EcScalar curve
 ecScalar i = modCurve Proxy
