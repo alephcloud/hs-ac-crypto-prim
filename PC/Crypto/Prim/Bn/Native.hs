@@ -6,6 +6,7 @@
 -- The intellectual property and technical concepts contained herein are
 -- proprietary to PivotCloud and are protected by U.S. and Foreign law.
 --
+{-# LANGUAGE CPP #-}
 {-# LANGUAGE FlexibleInstances #-}
 {-# LANGUAGE TypeSynonymInstances #-}
 {-# LANGUAGE TypeFamilies #-}
@@ -90,7 +91,11 @@ bnPower :: Bn -> Bn -> Bn
 bnPower = (^)
 
 bnPowerMod :: Bn -> Bn -> Bn -> Bn
+#if MIN_VERSION_integer_gmp(1,0,0)
+bnPowerMod = powModInteger -- FIXME is this version side channel resilient?
+#else
 bnPowerMod = powModSecInteger
+#endif
 
 bnInverseMod :: Bn -> Bn -> Bn
 bnInverseMod 0 _ = 0
