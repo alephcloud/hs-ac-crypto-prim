@@ -34,9 +34,6 @@ module PC.Crypto.Prim.Ecc.Key
 
 , ecFieldToBytes
 
--- ** Misc
-, bnSqrtModP
-
 ) where
 
 import qualified Data.ByteString as B
@@ -153,20 +150,6 @@ ecFieldFromBytes curve bs
 
 ecFieldToBytes :: EcCurve curve => curve -> Bn -> BackendByteArray
 ecFieldToBytes curve = padLeft 0 (curveFieldLength curve) . toBytes
-
--- | This is not a general method but works only for the moduli of curve 192 and 521:
---
--- > curveP `mod` 4 == 3
---
--- This condition is /not/ checked.
---
--- Note that the result may be positive or negative modulus curveP.
---
-bnSqrtModP :: Bn -> Bn -> Bn
-bnSqrtModP square prime = s
-    where
-    s = bnPowerMod square expo prime
-    expo = (bnHalve . bnHalve) $ (prime + 1)
 
 -- -------------------------------------------------------------------------- --
 -- * Keys

@@ -91,11 +91,7 @@ bnPower :: Bn -> Bn -> Bn
 bnPower = (^)
 
 bnPowerMod :: Bn -> Bn -> Bn -> Bn
-#if MIN_VERSION_integer_gmp(1,0,0)
-bnPowerMod = powModInteger -- FIXME is this version side channel resilient?
-#else
-bnPowerMod = powModSecInteger
-#endif
+bnPowerMod = powModInteger
 
 bnInverseMod :: Bn -> Bn -> Bn
 bnInverseMod 0 _ = 0

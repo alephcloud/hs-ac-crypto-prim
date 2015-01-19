@@ -116,17 +116,9 @@ Library
         else
             extra-libraries: crypto, ssl
 
-        if flag(ecc_openssl)
-            cpp-options: -DECC_OPENSSL
-            other-modules: PC.Crypto.Prim.Ecc.OpenSSL
-                         , PC.Crypto.Prim.Ecc.OpenSSLBind
-
-        else
-            cpp-options: -DECC_NATIVE
-            other-modules: PC.Crypto.Prim.Ecc.Native
-    else
-        cpp-options: -DECC_NATIVE
-        other-modules: PC.Crypto.Prim.Ecc.Native
+        cpp-options: -DECC_OPENSSL
+        other-modules: PC.Crypto.Prim.Ecc.OpenSSL
+                     , PC.Crypto.Prim.Ecc.OpenSSLBind
 
     if flag(curve25519)
         other-modules:      Crypto.DH.Curve25519

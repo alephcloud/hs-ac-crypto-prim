@@ -90,8 +90,7 @@ signWith (SecretKey sk) content k =
         s = bnMulMod (sh + (r * skBn)) (bnInverseMod k_bn curve_R) curve_R
      in EcdsaSignature { ecdsa_r = ecScalar r, ecdsa_s = ecScalar s }
   where
-    sh = unsafeFromBytes . padLeft 0 ecFieldLength . take ecFieldLength . toBytes $ hash
-    hash = sha512Hash content
+    sh = unsafeFromBytes . padLeft 0 ecFieldLength . take ecFieldLength . toBytes $ sha512Hash content
     skBn = getEcScalarBn $ sk
     k_bn = getEcScalarBn k
 
