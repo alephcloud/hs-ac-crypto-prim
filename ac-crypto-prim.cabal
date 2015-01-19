@@ -63,6 +63,7 @@ Library
     exposed-modules:
         PC.Crypto.Prim.Bn
         PC.Crypto.Prim.Aes
+        PC.Crypto.Prim.Class
         PC.Crypto.Prim.Ecc
         PC.Crypto.Prim.Ecdsa
         PC.Crypto.Prim.Ed25519
