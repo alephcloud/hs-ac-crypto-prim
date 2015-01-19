@@ -69,7 +69,6 @@ Library
         PC.Crypto.Prim.Sha
         PC.Crypto.Prim.Hmac
         PC.Crypto.Prim.Pbkdf2
-        PC.Crypto.Prim.DJB
         PC.Crypto.Prim.Curve25519
         PC.Crypto.Prim.ChaCha
         PC.Crypto.Prim.Poly1305
