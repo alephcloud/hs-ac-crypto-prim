@@ -100,8 +100,7 @@ Library
 
     if flag(native)
         cpp-options: -DNATIVE
-        other-modules: PC.Crypto.Prim.Native
-                     , PC.Crypto.Prim.Bn.Native
+        other-modules: PC.Crypto.Prim.Bn.Native
                      , PC.Crypto.Prim.Aes.Native
                      , PC.Crypto.Prim.Sha.Native
                      , PC.Crypto.Prim.Hmac.Native
