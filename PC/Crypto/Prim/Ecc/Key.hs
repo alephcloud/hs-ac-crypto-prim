@@ -204,12 +204,6 @@ instance EcCurve curve => Ord (PublicKey curve) where
 instance EcCurve curve => Bytes (PublicKey curve) where
     toBytes = toBytes . unPk
     fromBytes bytes = PublicKey <$> fromBytes bytes
-{-
-        (fromBytes bytes <|>
-            (ecPoint
-                <$> fromBytes (take ecScalarLength bytes)
-                <*> fromBytes (drop ecScalarLength bytes)))
--}
 
 data KeyPair curve = KeyPair
     { jEcKeyPairPk :: PublicKey curve
@@ -238,21 +232,3 @@ dhSecret sk pk = ecScalar . ecX $ dh sk pk
 
 getPk :: EcCurve curve => SecretKey curve -> PublicKey curve
 getPk (SecretKey sec) = PublicKey $ ecPointGen sec
-
--- -------------------------------------------------------------------------- --
--- Parser
-
-{-
-pPk :: (EcCurve curve, Bytes (PublicKey curve)) => Parser (PublicKey curve)
-pPk = pTakeBytes <?> "pPk"
-
-pSk :: (EcCurve curve, Bytes (SecretKey curve)) => Parser (SecretKey curve)
-pSk = pTakeBytesL <?> "pSk"
-
-pScalar :: (EcCurve curve, Bytes (EcScalar curve)) => Parser (EcScalar curve)
-pScalar = pTakeBytesL <?> "pScalar"
-
-pEcPoint :: (EcCurve curve, Bytes (EcPoint curve)) => Parser (EcPoint curve)
-pEcPoint = pTakeBytesL <?> "pEcPoint"
-
--}
