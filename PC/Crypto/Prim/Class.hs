@@ -19,7 +19,7 @@
 module PC.Crypto.Prim.Class
     (
     -- * Types
-      DhSecret
+      DhSecret(..)
     , KeyPair(..)
     , keypairGenerate
     -- * Classes
@@ -32,10 +32,14 @@ import Control.Applicative
 import Control.DeepSeq
 
 import PC.Bytes.ByteArray
+import PC.Crypto.Prim.SafeEq
+import PC.Crypto.Prim.Imports
 
 -- | A Diffie Hellman secret
 newtype DhSecret = DhSecret BackendByteArray
-    deriving (Show,Bytes,NFData)
+    deriving (Show,Bytes,NFData,SafeEq)
+instance Eq DhSecret where
+    (==) = safeEq
 
 -- | A KeyPair containing a public key and a secret key
 -- for a given algorithm
@@ -50,6 +54,8 @@ keypairGenerate = (\sec -> KeyPair sec (asymmetricGetPublic sec)) <$> asymmetric
 -- for asymmetric cryptography (also known as public-key cryptography)
 class ( Bytes secretKey
       , Bytes publicKey
+      , ToACN secretKey, FromACN secretKey
+      , ToACN publicKey, FromACN publicKey
       , Eq secretKey
       , Eq publicKey)
     => AsymmetricCrypto secretKey publicKey | secretKey -> publicKey

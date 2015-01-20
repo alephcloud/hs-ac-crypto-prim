@@ -1,5 +1,5 @@
 Name:                ac-crypto-prim
-Version:             0.2.1
+Version:             0.3.0
 Synopsis:            Pivotcloud Cryptographic Primitives Library
 description:
     Cryptographic Primitives:
@@ -70,9 +70,12 @@ Library
         PC.Crypto.Prim.Sha
         PC.Crypto.Prim.Hmac
         PC.Crypto.Prim.Pbkdf2
+        PC.Crypto.Prim.P256
+        PC.Crypto.Prim.P521
         PC.Crypto.Prim.Curve25519
         PC.Crypto.Prim.ChaCha
         PC.Crypto.Prim.Poly1305
+        PC.Crypto.Prim.SafeEq
     other-modules:
         PC.Crypto.Prim.Ecc.Key
         PC.Crypto.Prim.Ecc.Ops
