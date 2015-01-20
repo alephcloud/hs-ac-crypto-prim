@@ -1,5 +1,6 @@
 {-# LANGUAGE ForeignFunctionInterface #-}
 {-# LANGUAGE PackageImports #-}
+{-# LANGUAGE GeneralizedNewtypeDeriving #-}
 -- |
 -- Module      : Crypto.DH.Curve25519
 -- Copyright   : (c) Austin Seipp 2013
@@ -38,17 +39,18 @@ import           Data.ByteString.Internal as SI
 import           Data.ByteString.Unsafe   as SU
 import           Data.Word
 import           Data.Byteable
+import           Control.DeepSeq (NFData)
 
 --------------------------------------------------------------------------------
 
 -- | A 'SecretKey' created by 'createKeypair'. Be sure to keep this
 -- safe!
 newtype SecretKey = SecretKey { unSecretKey :: ByteString }
-        deriving (Eq, Show, Ord)
+        deriving (Eq, Show, Ord, NFData)
 
 -- | A 'PublicKey' created by 'createKeypair'.
 newtype PublicKey = PublicKey { unPublicKey :: ByteString }
-        deriving (Eq, Show, Ord)
+        deriving (Eq, Show, Ord, NFData)
 
 instance Byteable SecretKey where
     toBytes (SecretKey b) = b
