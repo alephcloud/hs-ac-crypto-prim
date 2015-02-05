@@ -97,6 +97,7 @@ Library
         transformers >= 0.3.0.0,
         mtl,
         crypto-random >= 0.0.7,
+        crypto-cipher-types >= 0.0.9,
         acn >= 0.1.2,
         pc-bytes >= 0.3.0
 

@@ -20,6 +20,7 @@ module PC.Crypto.Prim.Aes.Native
 , AesIV
 , AesIVLength
 , aesIVLength
+, AesGcmIV(..)
 , aesCBCResidual
 , aesBlockLength
 , AesBlockLength
@@ -29,6 +30,8 @@ module PC.Crypto.Prim.Aes.Native
 , aes256CbcEncryptNoPad
 , aes256CbcDecrypt
 , aes256CbcDecryptNoPad
+, aes256GcmEncrypt
+, aes256GcmDecrypt
 , AesSize
 , padPKCS7
 , unpadPKCS7
@@ -37,9 +40,12 @@ module PC.Crypto.Prim.Aes.Native
 import Control.Applicative
 
 import Crypto.Cipher.AES
+import Crypto.Cipher.Types (AuthTag(..))
 
 import Data.ByteString (ByteString)
 import qualified Data.ByteString as B
+import qualified Data.Byteable as B (toBytes)
+
 import Data.Proxy
 import Data.Monoid
 
@@ -93,6 +99,16 @@ instance BytesL AesIV where
     toBytesL (AesIV bytes) = toBytesL bytes
     fromBytesL = fmap AesIV . fromBytesL
 
+-- | AES GCM IVs -- at least 12 bytes
+newtype AesGcmIV = AesGcmIV ByteString
+    deriving (Eq, Ord)
+
+instance Bytes AesGcmIV where
+    toBytes (AesGcmIV bytes) = bytes
+    fromBytes b
+        | B.length b < 12 = Left ("invalid IV size for GCM operation: expecting at least 12 bytes, got " ++ (show $ B.length b) ++ " bytes")
+        | otherwise       = Right $ AesGcmIV b
+
 type AesKey256Length = 32
 
 generateAesKey256 :: IO AesKey256
@@ -137,6 +153,21 @@ aes256CbcDecrypt k iv d =
 aes256CbcDecryptNoPad :: AesKey256 -> AesIV -> ByteString -> ByteString
 aes256CbcDecryptNoPad k iv d =
     decryptCBC (initAES (toBytes k :: ByteString)) (toBytes iv :: ByteString) d
+
+-- | GCM encryption
+aes256GcmEncrypt :: AesKey256 -> AesGcmIV -> ByteString -> ByteString -> ByteString
+aes256GcmEncrypt k iv hdr d =
+    let (b,tag) = encryptGCM (initAES (toBytes k :: ByteString)) (toBytes iv) hdr d
+     in B.append b (B.toBytes tag)
+
+-- | GCM Decryption
+aes256GcmDecrypt :: AesKey256 -> AesGcmIV -> ByteString -> ByteString -> Maybe ByteString
+aes256GcmDecrypt k iv hdr cipherText
+    | B.length cipherText < 16 = Nothing
+    | otherwise                =
+        let (encrypted, expectedTag) = B.splitAt (B.length cipherText - 16) cipherText
+            (plain, tag)             = decryptGCM (initAES (toBytes k :: ByteString)) (toBytes iv) hdr encrypted
+         in if AuthTag expectedTag == tag then Just plain else Nothing
 
 type AesSize n = AesSize' n AesBlockLength (CmpNat n AesBlockLength)
 type family AesSize' (n :: Nat) (m :: Nat) (b :: Ordering) :: Nat where
