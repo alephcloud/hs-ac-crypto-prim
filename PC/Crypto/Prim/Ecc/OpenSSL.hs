@@ -177,8 +177,7 @@ ecPointGen = gen Proxy
   where gen :: EcCurve curve => Proxy curve -> EcScalar curve -> EcPoint curve
         gen proxy (EcScalar scalar) =
             let curve = curveFromProxy proxy
-                (EcPoint generator) = curveG curve
-             in EcPoint $ pointMul (curveGroup curve) generator scalar
+             in EcPoint $ pointGeneratorMul (curveGroup curve) scalar
 
 ecPointDouble :: EcCurve curve => EcPoint curve -> EcPoint curve
 ecPointDouble p@(EcPoint a) = EcPoint $ pointDbl (getPointGroup p) a
