@@ -24,7 +24,7 @@ module PC.Crypto.Prim.Ecc.OpenSSL
 , ecXscalar
 , ecY
 , ecPointMul
-, ecPointMul2
+, ecPointMulAddGeneratorMul
 , ecPointGen
 , ecPointAdd
 , ecIdentity
@@ -177,21 +177,15 @@ ecPointGen = gen Proxy
   where gen :: EcCurve curve => Proxy curve -> EcScalar curve -> EcPoint curve
         gen proxy (EcScalar scalar) =
             let curve = curveFromProxy proxy
-                (EcPoint generator) = curveG curve
-             in EcPoint $ pointMul (curveGroup curve) generator scalar
+             in EcPoint $ pointGeneratorMul (curveGroup curve) scalar
 
 ecPointDouble :: EcCurve curve => EcPoint curve -> EcPoint curve
 ecPointDouble p@(EcPoint a) = EcPoint $ pointDbl (getPointGroup p) a
 
--- | b.a + c.d
---
--- FIXME reorder arguments
--- VH: probably can use something faster in the binding
-ecPointMul2 :: EcCurve curve => EcPoint curve -> EcScalar curve -> EcScalar curve -> EcPoint curve -> EcPoint curve
-ecPointMul2 a b c d
-    | ecIsIdentity a || b == 0 = d `ecPointMul` c
-    | ecIsIdentity d || c == 0 = a `ecPointMul` b
-    | otherwise                = ecPointMul a b `ecPointAdd` ecPointMul d c
+-- | compute generator * n + q * m
+ecPointMulAddGeneratorMul :: EcCurve curve => EcScalar curve -> EcScalar curve -> EcPoint curve -> EcPoint curve
+ecPointMulAddGeneratorMul (EcScalar n) (EcScalar m) q@(EcPoint q') =
+    EcPoint $ pointMulWithGenerator (getPointGroup q) n q' m
 
 ecPointAdd :: EcCurve curve => EcPoint curve -> EcPoint curve -> EcPoint curve
 ecPointAdd p@(EcPoint a) (EcPoint b) = EcPoint $ pointAdd (getPointGroup p) a b

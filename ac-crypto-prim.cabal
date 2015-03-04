@@ -123,6 +123,7 @@ Library
         cpp-options: -DECC_OPENSSL
         other-modules: PC.Crypto.Prim.Ecc.OpenSSL
                      , PC.Crypto.Prim.Ecc.OpenSSLBind
+                     , PC.Crypto.Prim.Aes.OpenSSL
 
     if flag(curve25519)
         other-modules:      Crypto.DH.Curve25519

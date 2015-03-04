@@ -106,7 +106,7 @@ verify :: EcCurve curve
 verify qA content sig =
     toBytes r2 `constEqBytes` toBytes (ecdsa_r sig)
   where
-    r2 = ecXscalar $ ecPointMul2 curve_G u1 u2 (unPk qA)
+    r2 = ecXscalar $ ecPointMulAddGeneratorMul u1 u2 (unPk qA)
     u2 = ecdsa_r sig * w
     u1 = z * w
     w = ecScalarInverse (ecdsa_s sig)
@@ -114,5 +114,4 @@ verify qA content sig =
 
     ecFieldLength = curveFieldLength curve
     curve_R       = curveR curve
-    curve_G       = curveG curve
     curve         = getPointCurve (unPk qA)
