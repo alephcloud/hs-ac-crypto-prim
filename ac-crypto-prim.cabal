@@ -20,7 +20,7 @@ License:             AllRightsReserved
 License-file:        LICENSE
 Author:              PivotCloud
 Maintainer:          vhanquez@pivotmail.com
-Copyright:           Copyright (c) 2014 Pivotcloud
+Copyright:           Copyright (c) 2014-2015 Pivotcloud
 Category:            Cryptography
 Build-type:          Simple
 cabal-version: >=1.10

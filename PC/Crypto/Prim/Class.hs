@@ -1,21 +1,22 @@
--- Copyright (c) 2013-2014 PivotCloud, Inc. All Rights Reserved.
+-- Copyright (c) 2013-2015 PivotCloud, Inc. All Rights Reserved.
 --
 -- NOTICE: The dissemination, reproduction, or copying of this file and the
 -- information contained herein, in any medium, is strictly forbidden.
 --
 -- The intellectual property and technical concepts contained herein are
 -- proprietary to PivotCloud and are protected by U.S. and Foreign law.
---
+
 -- |
 -- Module      : PC.Crypto.Prim.Class
--- Copyright   : (c) 2013-2014 PivotCloud, Inc
--- License     : All Right Reserved
+-- Copyright: Copyright (c) 2013-2015 PivotCloud, Inc. All Rights Reserved.
+-- License: All Rights Reserved, see LICENSE file of the package
 -- Maintainer  : support@pivotmail.com
 --
 -- Framework for cryptographic operations
---
+
 {-# LANGUAGE FunctionalDependencies #-}
 {-# LANGUAGE GeneralizedNewtypeDeriving #-}
+
 module PC.Crypto.Prim.Class
     (
     -- * Types
