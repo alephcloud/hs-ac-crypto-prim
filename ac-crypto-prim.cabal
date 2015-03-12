@@ -16,11 +16,11 @@ description:
     .
     * KDF: PBKDF2
 Homepage:            https://github.com/alephcloud/hs-ac-crypto-prim
-License:             AllRightsReserved
+License:             Apache-2
 License-file:        LICENSE
 Author:              PivotCloud
 Maintainer:          vhanquez@pivotmail.com
-Copyright:           Copyright (c) 2014 Pivotcloud
+Copyright:           2013-2015 PivotCloud, Inc
 Category:            Cryptography
 Build-type:          Simple
 cabal-version: >=1.10
