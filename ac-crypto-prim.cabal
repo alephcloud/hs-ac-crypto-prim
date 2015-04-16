@@ -119,6 +119,9 @@ Library
             CC-Options:      -D MINGW32
         else
             extra-libraries: crypto, ssl
+            -- for testing on MAC, or with different openssl location:
+            -- extra-lib-dirs: /usr/local/Cellar/openssl/1.0.2/lib
+            -- include-dirs: /usr/local/Cellar/openssl/1.0.2/include/
 
         cpp-options: -DECC_OPENSSL
         other-modules: PC.Crypto.Prim.Ecc.OpenSSL
