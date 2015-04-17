@@ -10,10 +10,10 @@
 {-# LANGUAGE EmptyDataDecls #-}
 {-# LANGUAGE DeriveDataTypeable #-}
 module PC.Crypto.Prim.Aes.OpenSSL
-    ( encryptInitGCM
-    , decryptInitGCM
+    ( isSupportedGCM
     , encryptGCM
     , decryptGCM
+    , OpenSSLGcmError(..)
     ) where
 
 #include <openssl/opensslv.h>
@@ -24,136 +24,126 @@ module PC.Crypto.Prim.Aes.OpenSSL
 #define OPENSSL_HAS_GCM
 #endif
 
+import Control.Monad (when)
+import Control.Exception (Exception, throwIO)
+import Data.Typeable
 import Foreign.ForeignPtr
 import Foreign.Ptr
 import Foreign.Marshal.Alloc
 import Foreign.Marshal.Utils (copyBytes)
 import Foreign.C.Types
-import Foreign.C.String (withCString)
 import Foreign.Storable
 import Data.Word
-import Data.ByteString
+import Data.ByteString (ByteString)
 import qualified Data.ByteString.Internal as B
 import qualified Data.Byteable as B
 import System.IO.Unsafe
 
 type GCMCtx = ForeignPtr EVP_CIPHER_CTX
 
-encryptInitGCM key iv = initGCM DirectionEncrypt
-decryptInitGCM key iv = initGCM DirectionDecrypt
-
 data Direction = DirectionEncrypt | DirectionDecrypt
 
-initGCM :: Direction -> ByteString -> ByteString -> Either String GCMCtx
-initGCM direction key iv = unsafePerformIO $ do
-    cipher <- openssl_c_aes_256_gcm
-    if cipher == nullPtr
-        then return $ Left "openssl doesn't have a GCM cipher"
-        else do
-            fptr <- contextNew
-            withForeignPtr fptr $ \ctx    ->
-                B.withBytePtr key $ \keyPtr ->
-                B.withBytePtr iv  $ \ivPtr  -> do
-                    checkRet (openssl_c_encryptinit_ex ctx cipher nullEngine nullPtr nullPtr)
-                    checkRet (openssl_c_cipher_ctx_ctrl ctx ctrl_GCM_SET_IVLEN 12 nullPtr)
-                    case direction of
-                        DirectionEncrypt -> openssl_c_encryptinit_ex ctx nullPtr nullEngine keyPtr ivPtr
-                        DirectionDecrypt -> openssl_c_decryptinit_ex ctx nullPtr nullEngine keyPtr ivPtr
-            return $ Right fptr
-{-# NOINLINE initGCM #-}
+newtype OpenSSLGcmError = OpenSSLGcmError String
+    deriving (Show,Read,Eq,Typeable)
 
--- | One shot function to  GCM data without any incremental handling
-encryptGCM :: GCMCtx -> ByteString -> ByteString -> ByteString
-encryptGCM iniCtx header input = unsafePerformIO $ contextDuplicateTemp iniCtx $ \ctx -> do
+instance Exception OpenSSLGcmError
+
+isSupportedGCM :: Bool
+isSupportedGCM = unsafePerformIO $ do
+    cipher <- openssl_c_aes_256_gcm
+    return (cipher /= nullPtr)
+{-# NOINLINE isSupportedGCM #-}
+
+withGCM :: Direction -> ByteString -> ByteString -> (Ptr EVP_CIPHER_CTX -> IO a) -> a
+withGCM direction key iv f = unsafePerformIO $ do
+    cipher <- openssl_c_aes_256_gcm
+    when (cipher == nullPtr) $ error "openssl doesn't have a GCM cipher"
+    fptr <- contextNew $ \ctx -> checkRet "encryptinit_ex" (openssl_c_encryptinit_ex ctx cipher nullEngine nullPtr nullPtr)
+    withForeignPtr fptr $ \ctx    ->
+        B.withBytePtr key $ \keyPtr ->
+        B.withBytePtr iv  $ \ivPtr  -> do
+            checkRet "ctx_ctrl_set_ivlen" (openssl_c_cipher_ctx_ctrl ctx ctrl_GCM_SET_IVLEN 12 nullPtr)
+            case direction of
+                DirectionEncrypt -> checkRet "encryptinit_ex" (openssl_c_encryptinit_ex ctx nullPtr nullEngine keyPtr ivPtr)
+                DirectionDecrypt -> checkRet "decryptinit_ex" (openssl_c_decryptinit_ex ctx nullPtr nullEngine keyPtr ivPtr)
+            f ctx
+{-# NOINLINE withGCM #-}
+
+-- | One shot function to GCM data without any incremental handling
+encryptGCM :: ByteString -> ByteString -> ByteString -> ByteString -> ByteString
+encryptGCM key iv header input = withGCM DirectionEncrypt key iv $ \ctx -> do
     output <- B.mallocByteString ciphertextLength
 
     -- consume the header as authenticated data
-    B.withBytePtr header $ \h  ->
-        checkRet (alloca $ \outl -> openssl_c_encryptupdate ctx nullPtr outl h (fromIntegral headerLength))
+    when (headerLength > 0) $ do
+        B.withBytePtr header $ \h ->
+            checkRet "encryptupdate-header" (alloca $ \outl -> openssl_c_encryptupdate ctx nullPtr outl h (fromIntegral headerLength))
 
     -- consume the input data and, create output data + GCM tag
     alloca $ \ptrOutl ->
         B.withBytePtr input   $ \inp -> do
         withForeignPtr output $ \out -> do
-            checkRet (openssl_c_encryptupdate ctx out ptrOutl inp (fromIntegral inputLength))
+            checkRet "encryptupdate-input" (openssl_c_encryptupdate ctx out ptrOutl inp (fromIntegral inputLength))
             encryptedLen <- peek ptrOutl
-            checkRet (openssl_c_encryptfinal_ex ctx out ptrOutl)
-            checkRet (openssl_c_cipher_ctx_ctrl ctx ctrl_GCM_GET_TAG (fromIntegral gcmTagLength) (out `plusPtr` fromIntegral encryptedLen))
+            checkRet "encryptfinal_ex" (openssl_c_encryptfinal_ex ctx (out `plusPtr` (fromIntegral encryptedLen)) ptrOutl)
+            checkRet "ctx_ctrl_get_tag" (openssl_c_cipher_ctx_ctrl ctx ctrl_GCM_GET_TAG (fromIntegral gcmTagLength) (out `plusPtr` inputLength))
     return $ B.PS output 0 ciphertextLength
-  where ciphertextLength = B.byteableLength input + gcmTagLength
+  where
+        ciphertextLength = B.byteableLength input + gcmTagLength
         headerLength     = B.byteableLength header
         inputLength      = B.byteableLength input
 {-# NOINLINE encryptGCM #-}
 
 -- | One shot function to decrypt GCM data without any incremental handling
-decryptGCM :: GCMCtx -> ByteString -> ByteString -> Maybe ByteString
-decryptGCM iniCtx header input
+decryptGCM :: ByteString -> ByteString -> ByteString -> ByteString -> Maybe ByteString
+decryptGCM key iv header input
     | inputLength < gcmTagLength = Nothing
-    | otherwise                  = unsafePerformIO $ contextDuplicateTemp iniCtx $ \ctx -> do
+    | otherwise                  = withGCM DirectionDecrypt key iv $ \ctx -> do
         output <- B.mallocByteString plaintextLength
 
         -- consume the header as authenticated data
-        B.withBytePtr header $ \h  ->
-            checkRet (alloca $ \outl -> openssl_c_decryptupdate ctx nullPtr outl h (fromIntegral headerLength))
+        when (headerLength > 0) $ do
+            B.withBytePtr header $ \h  ->
+                checkRet "decryptupdate-header" (alloca $ \outl -> openssl_c_decryptupdate ctx nullPtr outl h (fromIntegral headerLength))
 
         -- consume the input data and, create output data + GCM tag
         B.withBytePtr input $ \inp ->
             withForeignPtr output $ \out ->
             alloca $ \ptrOutl -> do
-                checkRet (openssl_c_decryptupdate ctx out ptrOutl inp (fromIntegral plaintextLength))
-                checkRet (openssl_c_cipher_ctx_ctrl ctx ctrl_GCM_SET_TAG (fromIntegral gcmTagLength) (inp `plusPtr` plaintextLength))
+                checkRet "decryptupdate-input" (openssl_c_decryptupdate ctx out ptrOutl inp (fromIntegral plaintextLength))
+                checkRet "ctx_ctrl_set_tag" (openssl_c_cipher_ctx_ctrl ctx ctrl_GCM_SET_TAG (fromIntegral gcmTagLength) (inp `plusPtr` plaintextLength))
                 r <- openssl_c_decryptfinal_ex ctx out ptrOutl
                 if r == 0
                     then return Nothing -- validation failed
                     else return $ Just $ B.PS output 0 plaintextLength
-  where plaintextLength = B.byteableLength input - gcmTagLength
+  where
+        plaintextLength = B.byteableLength input - gcmTagLength
         headerLength    = B.byteableLength header
         inputLength     = B.byteableLength input
 {-# NOINLINE decryptGCM #-}
 
-{-
-aeadGCM :: Direction -> ByteString -> GCMCtx -> GCMCtx
-aeadGCM direction header oldCtx = unsafePerformIO $ do
-    contextDuplicate oldCtx $ \ctx ->
-        B.withBytePtr header $ \h  ->
-            case direction of
-                DirectionEncrypt -> checkRet (alloca $ \outl -> openssl_c_encryptupdate ctx nullPtr outl h (fromIntegral $ B.byteableLength header))
-                DirectionDecrypt -> checkRet (alloca $ \outl -> openssl_c_decryptupdate ctx nullPtr outl h (fromIntegral $ B.byteableLength header))
--}
+checkRet :: String -> IO CInt -> IO ()
+checkRet n f = do
+    r <- f
+    if (r /= 1) then throwIO $ OpenSSLGcmError n else return ()
 
-checkRet :: IO CInt -> IO ()
-checkRet f = do
-    _ <- f -- TODO on -1, throw an error
-    return ()
-
-{-
-contextDuplicateRet ctx f = do
-    fptr <- contextNew
-    a <- withForeignPtr ctx $ \old -> withForeignPtr fptr $ \new -> do
-        copyBytes new old sizeofEVP
-        f new
-    return (a, fptr)
-
-contextDuplicate ctx f = do
-    fptr <- contextNew
-    () <- withForeignPtr ctx $ \old -> withForeignPtr fptr $ \new -> do
-        copyBytes new old sizeofEVP
-        f new
-    return fptr
--}
-
+contextDuplicateTemp :: ForeignPtr a -> (Ptr a -> IO b) -> IO b
 contextDuplicateTemp ctx f = do
     allocaBytes sizeofEVP $ \tmp -> do
         withForeignPtr ctx $ \old -> copyBytes tmp old sizeofEVP
         f tmp
-    
-contextNew = do
-    fptr <- mallocBytes sizeofEVP >>= newForeignPtr openssl_c_cipher_ctx_free
-    addForeignPtrFinalizer openssl_c_cipher_ctx_cleanup fptr
-    return fptr
 
+contextNew :: (Ptr EVP_CIPHER_CTX -> IO ()) -> IO GCMCtx
+contextNew f = do
+    ptr <- mallocBytes sizeofEVP
+    B.memset (castPtr ptr) 0 (fromIntegral sizeofEVP)
+    f ptr
+    newForeignPtr openssl_c_cipher_ctx_cleanup ptr
+
+gcmTagLength :: Int
 gcmTagLength = 16
 
+sizeofEVP :: Int
 sizeofEVP = (#const sizeof(EVP_CIPHER_CTX))
 
 data EVP_CIPHER
@@ -170,6 +160,9 @@ data ENGINE
 
 nullEngine :: Ptr ENGINE
 nullEngine = nullPtr
+
+foreign import ccall unsafe "EVP_CIPHER_CTX_init"
+    openssl_c_cipher_ctx_init :: Ptr EVP_CIPHER_CTX -> IO ()
 
 foreign import ccall unsafe "&EVP_CIPHER_CTX_free"
     openssl_c_cipher_ctx_free :: FunPtr (Ptr EVP_CIPHER_CTX -> IO ())
@@ -212,6 +205,7 @@ openssl_c_aes_256_gcm :: IO (Ptr EVP_CIPHER)
 openssl_c_aes_256_gcm = return nullPtr
 #endif
 
+ctrl_GCM_SET_IVLEN, ctrl_GCM_GET_TAG, ctrl_GCM_SET_TAG :: CInt
 #ifdef OPENSSL_HAS_GCM
 ctrl_GCM_SET_IVLEN = (#const EVP_CTRL_GCM_SET_IVLEN)
 ctrl_GCM_GET_TAG =  (#const EVP_CTRL_GCM_GET_TAG)

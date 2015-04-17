@@ -71,6 +71,8 @@ import PC.Bytes.Codec
 import PC.Bytes.ByteArray
 import PC.Bytes.ByteArrayL
 
+import qualified PC.Crypto.Prim.Aes.OpenSSL as OpenSSL
+
 padPKCS7 :: Int -> ByteString -> ByteString
 padPKCS7 blockLength a = case blockLength - (B.length a `rem` blockLength) of
     0 -> a `mappend` B.replicate blockLength (fromIntegral blockLength)
@@ -172,15 +174,24 @@ aes256CbcDecryptNoPad k iv d =
 
 -- | GCM encryption
 aes256GcmEncrypt :: AesKey256 -> AesGcmIV -> ByteString -> ByteString -> ByteString
-aes256GcmEncrypt k iv hdr d =
-    let (b,tag) = encryptGCM (initAES (toBytes k :: ByteString)) (toBytes iv) hdr d
-     in B.append b (B.toBytes tag)
+aes256GcmEncrypt k iv hdr d
+    | OpenSSL.isSupportedGCM = doOpenSSL
+    | otherwise              = doHaskell
+  where
+    doOpenSSL = OpenSSL.encryptGCM (toBytes k) (toBytes iv) hdr d
+    doHaskell =
+        let (b,tag) = encryptGCM (initAES (toBytes k :: ByteString)) (toBytes iv) hdr d
+         in B.append b (B.toBytes tag)
 
 -- | GCM Decryption
 aes256GcmDecrypt :: AesKey256 -> AesGcmIV -> ByteString -> ByteString -> Maybe ByteString
 aes256GcmDecrypt k iv hdr cipherText
     | B.length cipherText < 16 = Nothing
-    | otherwise                =
+    | OpenSSL.isSupportedGCM   = doOpenSSL
+    | otherwise                = doHaskell
+  where
+    doOpenSSL = OpenSSL.decryptGCM (toBytes k) (toBytes iv) hdr cipherText
+    doHaskell =
         let (encrypted, expectedTag) = B.splitAt (B.length cipherText - 16) cipherText
             (plain, tag)             = decryptGCM (initAES (toBytes k :: ByteString)) (toBytes iv) hdr encrypted
          in if AuthTag expectedTag == tag then Just plain else Nothing
