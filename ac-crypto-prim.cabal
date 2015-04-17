@@ -90,14 +90,12 @@ Library
         securemem,
         cryptohash >= 0.11.5,
         cipher-aes >= 0.2.5,
-        base64-bytestring >= 1.0.0.1,
-        base16-bytestring >= 0.1.1.5,
         transformers >= 0.3.0.0,
         mtl,
         crypto-random >= 0.0.7,
         crypto-cipher-types >= 0.0.9,
         acn >= 0.1.2,
-        pc-bytes >= 0.3.0
+        pc-bytes >= 2015.4
 
     default-language: Haskell2010
 

@@ -67,7 +67,6 @@ import Data.Monoid
 
 import GHC.TypeLits
 
-import PC.Bytes.Codec
 import PC.Bytes.ByteArray
 import PC.Bytes.ByteArrayL
 
@@ -90,7 +89,7 @@ aesCBCResidual b = either (const Nothing) Just $ fromBytes $ B.drop (len - aesBl
 -- a newtype wrapper to tag this class of bitArray.
 --
 newtype AesKey256 = AesKey256 (ByteArrayL AesKey256Length)
-    deriving (Eq, Ord, Code64, Code16)
+    deriving (Eq, Ord)
 
 instance Bytes AesKey256 where
     toBytes (AesKey256 bytes) = toBytes bytes

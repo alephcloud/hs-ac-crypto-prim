@@ -58,13 +58,13 @@ type ChaChaKey256Length = 32
 type ChaChaNonceLength = 8
 
 newtype ChaChaKey256 = ChaChaKey256 (ByteArrayL ChaChaKey256Length)
-    deriving (Eq,Ord,Code64,Code16)
+    deriving (Eq,Ord)
 
 newtype ChaChaKey128 = ChaChaKey128 (ByteArrayL ChaChaKey128Length)
-    deriving (Eq,Ord,Code64,Code16)
+    deriving (Eq,Ord)
 
 newtype ChaChaNonce = ChaChaNonce (ByteArrayL ChaChaNonceLength)
-    deriving (Eq,Ord,Code64,Code16)
+    deriving (Eq,Ord)
 
 instance Bytes ChaChaKey256 where
     toBytes (ChaChaKey256 bytes) = toBytes bytes

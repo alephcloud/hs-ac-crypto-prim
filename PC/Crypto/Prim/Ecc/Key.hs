@@ -71,7 +71,6 @@ import Prelude hiding (length, splitAt, take, drop)
 
 import PC.Crypto.Prim.Ecc.Ops
 
-import PC.Bytes.Codec
 import PC.Bytes.ByteArray
 import PC.Bytes.ByteArrayL
 
@@ -110,14 +109,6 @@ instance EcCurve curve => Bytes (EcScalar curve) where
     toBytes = ecScalarToBytes
     fromBytes = ecScalarFromBytes
 
-instance (EcCurve curve, Code16 Bn) => Code16 (EcScalar curve) where
-    to16 = to16 . getEcScalarBn
-    from16 = fmap ecScalar . from16
-
-instance (EcCurve curve, Code64 Bn) => Code64 (EcScalar curve) where
-    to64 = to64 . getEcScalarBn
-    from64 = fmap ecScalar . from64
-
 ecScalarFromBytes :: EcCurve curve => BackendByteArray -> Either String (EcScalar curve)
 ecScalarFromBytes bs = from Proxy
   where from :: EcCurve curve => Proxy curve -> Either String (EcScalar curve)
@@ -147,16 +138,8 @@ instance EcCurve curve => Bytes (EcPoint curve) where
       where doFrom :: EcCurve curve => Proxy curve -> Either String (EcPoint curve)
             doFrom proxy = curvePointFromBin (curveFromProxy proxy) bs
 
-instance EcCurve curve => Code16 (EcPoint curve) where
-    to16 = to16 . toBytes
-    from16 = fromBytes <=< from16
-
-instance EcCurve curve => Code64 (EcPoint curve) where
-    to64 = to64 . toBytes
-    from64 = fromBytes <=< from64
-
 instance EcCurve curve => Show (EcPoint curve) where
-    show = to16
+    show = show . toBytesBase16
 
 ecFieldFromBytes :: EcCurve curve => curve -> BackendByteArray -> Either String Bn
 ecFieldFromBytes curve bs
@@ -173,15 +156,12 @@ ecFieldToBytes curve = padLeft 0 (curveFieldLength curve) . toBytes
 newtype SecretKey curve = SecretKey { unSk :: EcScalar curve }
     deriving (Show, Eq, Ord, NFData)
 
-deriving instance (EcCurve curve, Code64 Bn) => Code64 (SecretKey curve)
-deriving instance (EcCurve curve, Code16 Bn) => Code16 (SecretKey curve)
-
 instance EcCurve curve => Bytes (SecretKey curve) where
     toBytes = toBytes . unSk
     fromBytes = fmap SecretKey . fromBytes
 
 newtype PublicKey curve = PublicKey { unPk :: EcPoint curve }
-    deriving (Show, Eq, Code64, Code16, NFData)
+    deriving (Show, Eq, NFData)
 
 -- | This instance of 'Ord' for 'PublicKey' does not
 -- represent any topological properties. It is meant

@@ -33,7 +33,6 @@ module PC.Crypto.Prim.Curve25519
 
 import Control.DeepSeq
 
-import PC.Bytes.Codec
 import PC.Bytes.ByteArray
 import PC.Bytes.ByteArrayL
 import PC.Bytes.Utils

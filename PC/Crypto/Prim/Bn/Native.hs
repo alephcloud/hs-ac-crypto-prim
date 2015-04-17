@@ -71,14 +71,6 @@ instance Bytes Bn where
     toBytes = fromList . bnToBytes
     fromBytes = Right . bytesToBn . toList
 
-instance Code64 Bn where
-    to64 = to64 . toBytes
-    from64 = fromBytes <=< from64
-
-instance Code16 Bn where
-    to16 = to16 . toBytes
-    from16 = fromBytes <=< from16
-
 bn :: Int -> Bn
 bn = fromIntegral
 

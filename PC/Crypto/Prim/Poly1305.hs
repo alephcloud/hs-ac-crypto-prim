@@ -54,7 +54,7 @@ import PC.Bytes.ByteArrayL
 type Poly1305Ctx = Poly1305.Ctx
 
 newtype Poly1305 = Poly1305 (ByteArrayL Poly1305Length)
-    deriving (Eq,Ord,Code64,Code16)
+    deriving (Eq,Ord)
 
 macInitialize :: MacKey -> Poly1305Ctx
 macInitialize = Poly1305.initialize . toBytes
@@ -72,7 +72,7 @@ type MacKeyLength = 32
 type Poly1305Length = 16
 
 newtype MacKey = MacKey (ByteArrayL MacKeyLength)
-    deriving (Eq,Ord,Code64,Code16)
+    deriving (Eq,Ord)
 
 instance Bytes MacKey where
     toBytes (MacKey bytes) = toBytes bytes
