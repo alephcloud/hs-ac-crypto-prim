@@ -115,6 +115,7 @@ Library
             extra-lib-dirs: C:\OpenSSL-Win64\bin
                             C:\OpenSSL-Win64
             CC-Options:      -D MINGW32
+            include-dirs: C:\OpenSSL-Win64\include
         else
             extra-libraries: crypto, ssl
             -- for testing on MAC, or with different openssl location:
