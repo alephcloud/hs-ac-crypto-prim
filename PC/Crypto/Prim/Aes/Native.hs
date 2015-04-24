@@ -54,6 +54,7 @@ module PC.Crypto.Prim.Aes.Native
 ) where
 
 import Control.Applicative
+import Control.DeepSeq
 
 import Crypto.Cipher.AES
 import Crypto.Cipher.Types (AuthTag(..))
@@ -89,7 +90,7 @@ aesCBCResidual b = either (const Nothing) Just $ fromBytes $ B.drop (len - aesBl
 -- a newtype wrapper to tag this class of bitArray.
 --
 newtype AesKey256 = AesKey256 (ByteArrayL AesKey256Length)
-    deriving (Eq, Ord)
+    deriving (Eq, Ord, NFData)
 
 instance Bytes AesKey256 where
     toBytes (AesKey256 bytes) = toBytes bytes
@@ -118,7 +119,7 @@ instance BytesL AesIV where
 
 -- | AES GCM IVs -- at least 12 bytes
 newtype AesGcmIV = AesGcmIV ByteString
-    deriving (Eq, Ord)
+    deriving (Eq, Ord, NFData)
 
 instance Bytes AesGcmIV where
     toBytes (AesGcmIV bytes) = bytes
