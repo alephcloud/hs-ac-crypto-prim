@@ -25,6 +25,11 @@ Category:            Cryptography
 Build-type:          Simple
 cabal-version: >=1.10
 
+Extra-source-files:
+    cbits/*.h,
+    cbits/include/*.h,
+    cbits/*.c
+
 source-repository head
     type: git
     location: git@github.com:alephcloud/hs-ac-crypto-prim.git
