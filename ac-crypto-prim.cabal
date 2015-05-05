@@ -1,5 +1,5 @@
 Name:                ac-crypto-prim
-Version:             0.3.0
+Version:             0.3.1
 Synopsis:            Pivotcloud Cryptographic Primitives Library
 description:
     Cryptographic Primitives:
@@ -32,7 +32,12 @@ Extra-source-files:
 
 source-repository head
     type: git
-    location: git@github.com:alephcloud/hs-ac-crypto-prim.git
+    location: git@gitlab.infra-dev.trustroute.net:dev/ac-crypto-prim.git
+
+source-repository this
+    type: git
+    location: git@gitlab.infra-dev.trustroute.net:dev/ac-crypto-prim.git
+    tag: 0.3.1
 
 Flag native
     description: build using native code (no openssl, no haste)
@@ -99,7 +104,7 @@ Library
         mtl,
         crypto-random >= 0.0.7,
         crypto-cipher-types >= 0.0.9,
-        acn >= 0.1.2,
+        acn >= 0.1.2.1,
         pc-bytes >= 2015.4
 
     default-language: Haskell2010
