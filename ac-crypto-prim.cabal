@@ -16,7 +16,7 @@ description:
     .
     * KDF: PBKDF2
 Homepage:            https://github.com/alephcloud/hs-ac-crypto-prim
-License:             Apache-2
+License:             Apache-2.0
 License-file:        LICENSE
 Author:              PivotCloud
 Maintainer:          vhanquez@pivotmail.com
