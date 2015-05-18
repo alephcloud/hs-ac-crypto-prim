@@ -22,7 +22,6 @@
 -- License     : Apache-2, see LICENSE file of the package
 -- Maintainer  : licensing@pivotmail.com
 --
-{-# LANGUAGE CPP #-}
 {-# LANGUAGE FlexibleInstances #-}
 {-# LANGUAGE TypeSynonymInstances #-}
 {-# LANGUAGE TypeFamilies #-}

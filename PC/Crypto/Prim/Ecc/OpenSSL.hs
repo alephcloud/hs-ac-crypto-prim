@@ -23,7 +23,6 @@
 -- Maintainer  : licensing@pivotmail.com
 --
 {-# LANGUAGE GeneralizedNewtypeDeriving #-}
-{-# LANGUAGE DataKinds #-}
 module PC.Crypto.Prim.Ecc.OpenSSL
 (
 -- * Elliptic Curve Mathematics
