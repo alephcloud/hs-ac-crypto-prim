@@ -32,12 +32,7 @@ Extra-source-files:
 
 source-repository head
     type: git
-    location: git@gitlab.infra-dev.trustroute.net:dev/ac-crypto-prim.git
-
-source-repository this
-    type: git
-    location: git@gitlab.infra-dev.trustroute.net:dev/ac-crypto-prim.git
-    tag: 0.3.1
+    location: https://github.com/alephcloud/hs-ac-crypto-prim
 
 Flag native
     description: build using native code (no openssl, no haste)
