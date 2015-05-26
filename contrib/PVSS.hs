@@ -1,21 +1,31 @@
--- Copyright (c) 2013-2015 PivotCloud, Inc. All Rights Reserved.
+-- Copyright (c) 2013-2015 PivotCloud, Inc.
 --
--- NOTICE: The dissemination, reproduction, or copying of this file and the
--- information contained herein, in any medium, is strictly forbidden.
+-- PC.Crypto.PVSS
 --
--- The intellectual property and technical concepts contained herein are
--- proprietary to PivotCloud and are protected by U.S. and Foreign law.
+-- Please feel free to contact us at licensing@pivotmail.com with any
+-- contributions, additions, or other feedback; we would love to hear from
+-- you.
+--
+-- Licensed under the Apache License, Version 2.0 (the "License"); you may
+-- not use this file except in compliance with the License. You may obtain a
+-- copy of the License at http://www.apache.org/licenses/LICENSE-2.0
+--
+-- Unless required by applicable law or agreed to in writing, software
+-- distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+-- WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+-- License for the specific language governing permissions and limitations
+-- under the License.
 --
 -- |
 -- Module      : PC.Crypto.PVSS
 -- Copyright   : (c) 2013-2015 PivotCloud, Inc
--- License     : All Right Reserved
--- Maintainer  : support@pivotmail.com
+-- License     : Apache-2, see LICENSE file of the package
+-- Maintainer  : licensing@pivotmail.com
 --
 -- Implementation of the Public Verifiable Secret Scheme
 -- based on Berry Schoenmakers's paper:
 --
---	<http://www.win.tue.nl/~berry/papers/crypto99.pdf>
+--     <http://www.win.tue.nl/~berry/papers/crypto99.pdf>
 --
 -- Other secret sharing scheme for references:
 --
@@ -29,7 +39,6 @@
 -- This implementation used the 'u = g^random' scheme
 -- described in section 4 to actually compute the secret, instead of
 -- recovering g^secret from the section 3 scheme.
---
 {-# LANGUAGE BangPatterns #-}
 {-# LANGUAGE ViewPatterns #-}
 {-# LANGUAGE GeneralizedNewtypeDeriving #-}
